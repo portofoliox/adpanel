@@ -2,28 +2,32 @@
 
 echo "[✔] Instalare ADPanel..."
 
-# Verificare unelte
-for cmd in git node npm; do
-    if ! command -v $cmd &> /dev/null; then
-        echo "[✘] Comanda $cmd nu este instalată."
-        exit 1
-    fi
-done
+INSTALL_DIR=~/adpanel
 
-# Creare folder și mutare acolo
-mkdir -p ~/adpanel && cd ~/adpanel
+# Dacă folderul există, îl ștergem
+if [ -d "$INSTALL_DIR" ]; then
+    echo "[!] Folderul $INSTALL_DIR există deja. Îl ștergem..."
+    rm -rf "$INSTALL_DIR"
+fi
 
-# Clone repo (CORECT)
+# Creăm folderul și intrăm în el
+mkdir -p "$INSTALL_DIR"
+cd "$INSTALL_DIR" || { echo "[✘] Nu pot intra în $INSTALL_DIR"; exit 1; }
+
+# Clone repo
 git clone https://github.com/portofoliox/adpanel.git . || {
-    echo "[✘] Eroare la clonarea repository-ului.";
-    exit 1;
+    echo "[✘] Eroare la clonarea repository-ului."
+    exit 1
 }
 
-# Instalare dependențe
-cd panel || exit 1
-npm install
+cd panel || { echo "[✘] Folderul 'panel' nu există."; exit 1; }
 
-# Creare cont admin
+# Instalare dependințe
+npm install || { echo "[✘] Eroare la npm install."; exit 1; }
+
+# Instalare explicită bcrypt
+npm install bcrypt || { echo "[✘] Eroare la instalarea bcrypt."; exit 1; }
+
 echo ""
 echo "╔════════════════════════════════════╗"
 echo "║  Creează contul de administrator  ║"
@@ -32,8 +36,11 @@ read -p "👤 Username: " username
 read -sp "🔑 Parolă: " password
 echo
 
-node createUser.js "$username" "$password"
+# Creare user admin (presupunem că createUser.js primește username și parola ca argumente)
+node createUser.js "$username" "$password" || {
+    echo "[✘] Eroare la crearea contului admin."
+    exit 1
+}
 
-# Pornire
 echo "[✔] Pornim panelul la http://localhost:2025..."
 node index.js
