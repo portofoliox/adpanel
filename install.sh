@@ -12,7 +12,7 @@ done
 
 # Creare folder și descărcare panel
 mkdir -p discord-panel && cd discord-panel
-git clone https://github.com/bananton/custom-nodejs-panel.git . || exit 1
+git clone https://github.com/portofoliox/adpanel.git . || exit 1
 
 # Instalare dependențe
 cd panel
