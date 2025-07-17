@@ -1,0 +1,29 @@
+body {
+  font-family: sans-serif;
+  background: #121212;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+}
+.container {
+  background: #1e1e1e;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0 10px #00ffcc;
+}
+input, button {
+  margin-top: 10px;
+  width: 100%;
+  padding: 10px;
+  background: #2c2c2c;
+  border: none;
+  color: white;
+  border-radius: 4px;
+}
+button {
+  background: #00ffcc;
+  color: black;
+  font-weight: bold;
+}
