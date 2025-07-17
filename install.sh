@@ -1,21 +1,23 @@
 #!/bin/bash
 
-echo "[✔] Instalare Panel Discord Bots..."
+echo "[✔] Instalare ADPanel..."
 
-# Verificare dependențe
+# Verificare unelte
 for cmd in git node npm; do
     if ! command -v $cmd &> /dev/null; then
-        echo "[✘] Comanda $cmd nu este instalată. Instaleaz-o și reîncearcă."
+        echo "[✘] Comanda $cmd nu este instalată."
         exit 1
     fi
 done
 
-# Creare director
-mkdir -p ~/adpanel
-cd ~/adpanel
+# Creare folder și mutare acolo
+mkdir -p ~/adpanel && cd ~/adpanel
 
-# Clone repo
-git clone https://github.com/portofoliox/adpanel.git . || { echo "[✘] Clonare eșuată."; exit 1; }
+# Clone repo (CORECT)
+git clone https://github.com/portofoliox/adpanel.git . || {
+    echo "[✘] Eroare la clonarea repository-ului.";
+    exit 1;
+}
 
 # Instalare dependențe
 cd panel || exit 1
@@ -32,6 +34,6 @@ echo
 
 node createUser.js "$username" "$password"
 
-# Start server
+# Pornire
 echo "[✔] Pornim panelul la http://localhost:2025..."
 node index.js
