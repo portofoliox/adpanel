@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head><title>ADPanel</title></head>
+<body>
+  <div id="loginDiv">
+    <h2>Login</h2>
+    <input id="username" placeholder="Username" />
+    <input id="password" placeholder="Password" type="password" />
+    <button onclick="login()">Login</button>
+    <div id="loginMsg"></div>
+  </div>
+
+  <div id="panelDiv" style="display:none;">
+    <h2>My Servers</h2>
+    <button onclick="createServer()">Create Server</button>
+    <ul id="serverList"></ul>
+  </div>
+
+<script>
+async function login() {
+  const u = document.getElementById('username').value;
+  const p = document.getElementById('password').value;
+  const res = await fetch('/login', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({username: u, password: p})
+  });
+  if (res.ok) {
+    document.getElementById('loginDiv').style.display = 'none';
+    document.getElementById('panelDiv').style.display = 'block';
+    loadServers();
+  } else {
+    document.getElementById('loginMsg').innerText = 'Login failed';
+  }
+}
+
+async function loadServers() {
+  const res = await fetch('/api/servers');
+  const servers = await res.json();
+  const ul = document.getElementById('serverList');
+  ul.innerHTML = '';
+  servers.forEach(s => {
+    const li = document.createElement('li');
+    li.innerHTML = `ID: ${s.id} | Port: ${s.port} | NodeJS: ${s.nodeVersion} | Running: ${s.running} 
+      <button onclick="startServer('${s.id}')">Start</button>
+      <button onclick="stopServer('${s.id}')">Stop</button>`;
+    ul.appendChild(li);
+  });
+}
+
+async function createServer() {
+  const nodeVersion = prompt('Enter NodeJS version (ex: 18, 20, default):');
+  if (!nodeVersion) return;
+  const res = await fetch('/api/servers', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({nodeVersion})
+  });
+  const srv = await res.json();
+  loadServers();
+  alert('Created server with ID: ' + srv.id + ' on port ' + srv.port);
+}
+
+async function startServer(id) {
+  await fetch(`/api/servers/${id}/start`, { method: 'POST' });
+  loadServers();
+}
+async function stopServer(id) {
+  await fetch(`/api/servers/${id}/stop`, { method: 'POST' });
+  loadServers();
+}
+</script>
+</body>
+</html>
