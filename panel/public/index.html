@@ -1,74 +1,131 @@
 <!DOCTYPE html>
-<html>
-<head><title>ADPanel</title></head>
+<html lang="ro">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ADPanel - Dashboard</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; }
+  #dashboard, #serverControls { display: none; }
+  button { margin: 0 5px; }
+  .server-item { margin-bottom: 10px; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+  .server-item span { font-weight: bold; }
+</style>
+</head>
 <body>
-  <div id="loginDiv">
-    <h2>Login</h2>
-    <input id="username" placeholder="Username" />
-    <input id="password" placeholder="Password" type="password" />
-    <button onclick="login()">Login</button>
-    <div id="loginMsg"></div>
+
+<div id="loginDiv">
+  <h2>Login</h2>
+  <input id="username" placeholder="Username" /><br><br>
+  <input id="password" placeholder="Parolă" type="password" /><br><br>
+  <button onclick="login()">Login</button>
+  <div id="loginMsg" style="color:red;margin-top:8px;"></div>
+</div>
+
+<div id="dashboard">
+  <h2>Dashboard</h2>
+  <button onclick="logout()">Logout</button>
+  <h3>Serverele mele</h3>
+  <button onclick="showCreateServer()">Creează server nou</button>
+
+  <div id="createServerDiv" style="margin:10px 0; display:none;">
+    Versiune NodeJS: <input id="nodeVersion" placeholder="ex: 18, 20, default" />
+    <button onclick="createServer()">Crează</button>
   </div>
 
-  <div id="panelDiv" style="display:none;">
-    <h2>My Servers</h2>
-    <button onclick="createServer()">Create Server</button>
-    <ul id="serverList"></ul>
-  </div>
+  <div id="serversList"></div>
+</div>
 
 <script>
-async function login() {
-  const u = document.getElementById('username').value;
-  const p = document.getElementById('password').value;
-  const res = await fetch('/login', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({username: u, password: p})
-  });
-  if (res.ok) {
-    document.getElementById('loginDiv').style.display = 'none';
-    document.getElementById('panelDiv').style.display = 'block';
-    loadServers();
-  } else {
-    document.getElementById('loginMsg').innerText = 'Login failed';
+  async function login() {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value.trim();
+    if (!username || !password) {
+      document.getElementById('loginMsg').innerText = 'Completează toate câmpurile.';
+      return;
+    }
+    const res = await fetch('/login', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ username, password })
+    });
+    if (res.ok) {
+      document.getElementById('loginDiv').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      loadServers();
+    } else {
+      const err = await res.json();
+      document.getElementById('loginMsg').innerText = err.error || 'Eroare la login.';
+    }
   }
-}
 
-async function loadServers() {
-  const res = await fetch('/api/servers');
-  const servers = await res.json();
-  const ul = document.getElementById('serverList');
-  ul.innerHTML = '';
-  servers.forEach(s => {
-    const li = document.createElement('li');
-    li.innerHTML = `ID: ${s.id} | Port: ${s.port} | NodeJS: ${s.nodeVersion} | Running: ${s.running} 
-      <button onclick="startServer('${s.id}')">Start</button>
-      <button onclick="stopServer('${s.id}')">Stop</button>`;
-    ul.appendChild(li);
-  });
-}
+  async function logout() {
+    await fetch('/logout', { method: 'POST' });
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('loginDiv').style.display = 'block';
+  }
 
-async function createServer() {
-  const nodeVersion = prompt('Enter NodeJS version (ex: 18, 20, default):');
-  if (!nodeVersion) return;
-  const res = await fetch('/api/servers', {
-    method: 'POST',
-    headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({nodeVersion})
-  });
-  const srv = await res.json();
-  loadServers();
-  alert('Created server with ID: ' + srv.id + ' on port ' + srv.port);
-}
+  function showCreateServer() {
+    const div = document.getElementById('createServerDiv');
+    div.style.display = div.style.display === 'none' ? 'block' : 'none';
+  }
 
-async function startServer(id) {
-  await fetch(`/api/servers/${id}/start`, { method: 'POST' });
-  loadServers();
-}
-async function stopServer(id) {
-  await fetch(`/api/servers/${id}/stop`, { method: 'POST' });
-  loadServers();
-}
+  async function createServer() {
+    const nodeVersion = document.getElementById('nodeVersion').value.trim() || 'default';
+    const res = await fetch('/api/servers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nodeVersion }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      // Redirect automat la server
+      window.location.href = `http://localhost:${data.port}`;
+    } else {
+      alert('Eroare la crearea serverului');
+    }
+  }
+
+  async function loadServers() {
+    const res = await fetch('/api/servers');
+    if (!res.ok) {
+      alert('Nu se pot încărca serverele');
+      return;
+    }
+    const servers = await res.json();
+    const listDiv = document.getElementById('serversList');
+    listDiv.innerHTML = '';
+    if (servers.length === 0) {
+      listDiv.innerText = 'Nu ai servere create.';
+      return;
+    }
+    servers.forEach(srv => {
+      const div = document.createElement('div');
+      div.className = 'server-item';
+      div.innerHTML = `
+        <span>ID: ${srv.id}</span><br>
+        Port: ${srv.port}<br>
+        Node.js: ${srv.nodeVersion}<br>
+        Status: ${srv.running ? '<b style="color:green">Pornit</b>' : '<b style="color:red">Oprit</b>'}<br>
+        <button onclick="startServer('${srv.id}')">Start</button>
+        <button onclick="stopServer('${srv.id}')">Stop</button>
+        <button onclick="window.open('http://localhost:${srv.port}','_blank')">Vezi Server</button>
+      `;
+      listDiv.appendChild(div);
+    });
+  }
+
+  async function startServer(id) {
+    const res = await fetch(`/api/servers/${id}/start`, { method: 'POST' });
+    if (res.ok) loadServers();
+    else alert('Eroare la pornirea serverului');
+  }
+
+  async function stopServer(id) {
+    const res = await fetch(`/api/servers/${id}/stop`, { method: 'POST' });
+    if (res.ok) loadServers();
+    else alert('Eroare la oprirea serverului');
+  }
 </script>
+
 </body>
 </html>
