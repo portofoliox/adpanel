@@ -2,7 +2,7 @@
 
 echo "[✔] Instalare ADPanel..."
 
-INSTALL_DIR=~/adpanel
+INSTALL_DIR=./adpanel
 
 # Dacă folderul există, îl ștergem
 if [ -d "$INSTALL_DIR" ]; then
@@ -42,5 +42,9 @@ node createUser.js "$username" "$password" || {
     exit 1
 }
 
-echo "[✔] Pornim panelul la http://localhost:2025..."
-node index.js
+echo "[✔] Pornim panelul la http://localhost:2025 în background..."
+
+nohup node index.js > panel.log 2>&1 &
+
+echo "[✔] Panelul rulează acum în background."
+echo "     Poți vedea logurile cu: tail -f $INSTALL_DIR/panel/panel.log"
