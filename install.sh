@@ -2,29 +2,36 @@
 
 echo "[✔] Instalare Panel Discord Bots..."
 
-# Verificare comenzi
+# Verificare dependențe
 for cmd in git node npm; do
     if ! command -v $cmd &> /dev/null; then
-        echo "[...] Instalare $cmd..."
-        pkg install -y $cmd
+        echo "[✘] Comanda $cmd nu este instalată. Instaleaz-o și reîncearcă."
+        exit 1
     fi
 done
 
-# Creare folder și descărcare panel
-mkdir -p discord-panel && cd discord-panel
-git clone https://github.com/portofoliox/adpanel.git . || exit 1
+# Creare director
+mkdir -p ~/adpanel
+cd ~/adpanel
+
+# Clone repo
+git clone https://github.com/portofoliox/adpanel.git . || { echo "[✘] Clonare eșuată."; exit 1; }
 
 # Instalare dependențe
-cd panel
+cd panel || exit 1
 npm install
 
-# Creare cont
-read -p "Alege un nume de utilizator pentru admin: " username
-read -sp "Alege o parolă: " password
+# Creare cont admin
+echo ""
+echo "╔════════════════════════════════════╗"
+echo "║  Creează contul de administrator  ║"
+echo "╚════════════════════════════════════╝"
+read -p "👤 Username: " username
+read -sp "🔑 Parolă: " password
 echo
 
 node createUser.js "$username" "$password"
 
-# Pornire
-echo "[✔] Pornim panelul pe portul 2025..."
+# Start server
+echo "[✔] Pornim panelul la http://localhost:2025..."
 node index.js
