@@ -1,0 +1,39 @@
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>ADPanel</title>
+        <link rel="stylesheet" href="/dashboard.css">
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Bitcount:wght@100..900&display=swap" rel="stylesheet">
+      </head>
+      <body>
+        <h1 class="title"><a href="/" style="text-decoration: none; color: white;">ADPanel</a></h1>
+
+        <form class="upload-form" action="/upload" method="POST" enctype="multipart/form-data">
+          <input type="file" name="file" accept=".zip" required>
+          <button>Upload ZIP</button>
+        </form>
+
+
+
+        <div class="list">
+          <% bots.forEach(bot => { %>
+            <div class="server-box" onclick="location.href='/bot/<%= bot %>'">
+              <div class="server-header">
+                <span class="server-icon">⚙️</span>
+                <span class="server-name"><%= bot %></span>
+              </div>
+            </div>
+            <div class="pet"></div>
+            <div>
+              <a class="start">Let's get started</a>
+            </div>
+            <div>
+              <a class="start-description">Create your server</a>
+            </div>
+          <% }) %>
+        </div>
+      </body>
+      </html>
