@@ -1,5 +1,8 @@
 # What is this?
    **This is a panel for Termux or any other Linux OS for running Discord Bots on your phone**
+   ![](https://files.catbox.moe/z21p3v.png) 
+
+
 
 # How to install?
    **Execute this command** `git clone https://github.com/portofoliox/adpanel.git && cd adpanel && bash install.sh && bash start.sh`
