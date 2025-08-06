@@ -36,6 +36,3 @@ bash start.sh
 ```
 
 ---
-
-# 📜 License
-`© An ADSetups product. All rights reserved.`
