@@ -153,7 +153,6 @@ io.on("connection", (socket) => {
             "--gc-global",
             "--no-warnings",
             "--lazy",
-            "--turbo-fast-startup",
             file,
           ],
           {
