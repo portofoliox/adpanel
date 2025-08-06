@@ -1,20 +1,41 @@
-# What is this?
-   **This is a panel for Termux or any other Linux OS for running Discord Bots on your phone**
-   ![](https://files.catbox.moe/z21p3v.png) 
+# 🔥 What is this?
+**A powerful, easy-to-use panel for Termux or any Linux OS to run your Discord bots right from your phone!**
 
+<p align="center">
+  <img src="https://files.catbox.moe/z21p3v.png" alt="ADPanel preview" width="400"/>
+</p>
 
+---
 
-# How to install?
-   **Execute this command** `git clone https://github.com/portofoliox/adpanel.git && cd adpanel && bash install.sh && bash start.sh`
+# ⚙️ How to install?
+**Just run this in your terminal:**
 
-# Done.
-   **Now you can enjoy running your discord bots on your phone!**
-   
-# How to I kill the panel?
-   **Very simple! Just type `kill -f panel.js`**
+```bash
+git clone https://github.com/portofoliox/adpanel.git && cd adpanel && bash install.sh && bash start.sh
+```
 
-# How do I start the panel easily?
-   **You just need to type `bash start.sh` in adpanel directory and it will start in the background!**
+---
 
-# License
-   `© An ADSetups product. All rights reserved`
+# ✅ Done!
+**You're all set to manage your Discord bots like a pro — right from your phone!**
+
+---
+
+# ❌ How do I stop the panel?
+**Run this:**
+```bash
+kill -f panel.js
+```
+
+---
+
+# 🚀 How do I start the panel again?
+**Inside the `adpanel` folder, run:**
+```bash
+bash start.sh
+```
+
+---
+
+# 📜 License
+`© An ADSetups product. All rights reserved.`
