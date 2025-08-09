@@ -1,5 +1,5 @@
 # 🔥 What is this?
-**A powerful, easy-to-use panel for Termux or any Linux OS to run your Discord bots right from your phone!**
+**A powerful, easy-to-use panel for Termux or any Linux OS to run NODE.JS applications right from your phone!**
 
 <p align="center">
   <img src="https://files.catbox.moe/z21p3v.png" alt="ADPanel preview" width="900"/>
@@ -17,7 +17,7 @@ git clone https://github.com/portofoliox/adpanel.git && cd adpanel && bash insta
 ---
 
 # ✅ Done!
-**You're all set to manage your Discord bots like a pro — right from your phone!**
+**You're all set to manage yourNODE.JS Applications like a pro — right from your phone!**
 
 ---
 
