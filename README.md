@@ -11,7 +11,7 @@
 **Just run this in your terminal:**
 
 ```bash
-git clone https://github.com/portofoliox/adpanel.git && cd adpanel && bash install.sh && bash start.sh
+git clone https://github.com/portofoliox/adpanel.git && cd adpanel && bash initialize.sh && bash start.sh
 ```
 
 ---
@@ -34,5 +34,20 @@ kill -f panel.js
 ```bash
 bash start.sh
 ```
+
+---
+
+---
+
+# 🚀 How do I manage my panel settings from terminal?
+**Inside the `adpanel` folder, run:**
+```bash
+bash initialize.sh
+```
+# After that you will see:
+1. Intialize your panel
+2. Change your admin password
+3. Delete your admin user
+4. Create a new user
 
 ---
