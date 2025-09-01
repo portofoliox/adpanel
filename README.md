@@ -7,6 +7,11 @@
 
 ---
 
+# 📝 Note
+   This Dashboard can be used on any other Operating System for a low resource consumption of resources.
+
+---
+
 # ⚙️ How to install?
 **Just run this in your terminal:**
 
