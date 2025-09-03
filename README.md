@@ -1,5 +1,5 @@
 # 🔥 What is this?
-**A powerful, easy-to-use panel for Termux or any Linux OS to run NODE.JS applications right from your phone!**
+**A powerful, easy-to-use panel for Termux or any Linux OS to run NODE.JS applications right from your phone or any system!**
 
 <p align="center">
   <img src="https://files.catbox.moe/z21p3v.png" alt="ADPanel preview" width="900"/>
