@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>ADPanel - <%= bot %></title>
+    <link
+      id="favicon"
+      rel="icon"
+      type="image/png"
+      href="/images/adpanel-dark.png"
+    />
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/socket.io/socket.io.js"></script>
+
+    <script>
+      const darkFavicon = "/images/adpanel-white.png";
+      const lightFavicon = "/images/adpanel-dark.png";
+
+      const darkApple = "/images/adpanel-white.png";
+      const lightApple = "/images/adpanel-dark.png";
+      function updateIcons() {
+        const isDark = window.matchMedia(
+          "(prefers-color-scheme: dark)"
+        ).matches;
+
+        document
+          .querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]')
+          .forEach((el) => el.remove());
+
+        const linkFavicon = document.createElement("link");
+        linkFavicon.rel = "icon";
+        linkFavicon.type = "image/png";
+        linkFavicon.href = isDark ? darkFavicon : lightFavicon;
+        document.head.appendChild(linkFavicon);
+
+        const linkApple = document.createElement("link");
+        linkApple.rel = "apple-touch-icon";
+        linkApple.type = "image/png";
+        linkApple.href = isDark ? darkApple : lightApple;
+        document.head.appendChild(linkApple);
+      }
+
+      updateIcons();
+
+      window
+        .matchMedia("(prefers-color-scheme: dark)")
+        .addEventListener("change", updateIcons);
+    </script>
+  </head>
+  <body>
+    <div class="console">
+      <div class="controls">
+        <select id="scriptSelect"></select>
+        <button onclick="run()" class="run-button">
+          <i
+            class="fa-solid fa-play"
+            style="color: white; transform: rotate(90deg)"
+          ></i>
+        </button>
+        <button onclick="stop()" class="stop-button">
+          <i class="fa-solid fa-stop" style="color: white"></i>
+        </button>
+      </div>
+
+      <div class="header"></div>
+      <div class="body-console"></div>
+      <div class="brow"></div>
+      <div class="spacc"></div>
+      <div class="close" title="Stop" onclick="stop()"></div>
+      <div class="minimize" title="Minimize" onclick="stop()"></div>
+      <div class="maximize" title="Start" onclick="run()"></div>
+      <pre id="console"></pre>
+
+      <div style="margin-top: 20px">
+        <i
+          class="fa-solid fa-arrow-right-to-bracket"
+          style="
+            position: absolute;
+            z-index: 1000;
+            font-size: 15px;
+            color: gray;
+            margin-top: -17px;
+            margin-left: 20px;
+          "
+        ></i>
+        <input
+          type="text"
+          id="cmdInput"
+          placeholder="Type a command..."
+          style="
+            position: absolute;
+            width: 1320px;
+            height: 20px;
+            padding: 10px;
+            padding-left: 45px;
+            outline: none;
+            top: 545px;
+            left: -5px;
+            background-color: #303030;
+            border: none;
+            color: gray;
+          "
+        />
+        <div class="browbody"></div>
+        <div class="browcomponent"></div>
+      </div>
+    </div>
+
+    <button
+      onclick="createNew()"
+      style="
+        position: absolute;
+        margin-top: 700px;
+        margin-left: 170px;
+        padding: 5px;
+        border-radius: 20px;
+        background-color: #61dafb;
+        border: none;
+        gap: 40px;
+        width: 150px;
+        white-space: nowrap;
+        cursor: pointer;
+        color: black;
+      "
+    >
+      <i class="fa-solid fa-file" style="margin-right: 5px"></i>
+      New File/Folder
+    </button>
+
+    <div class="pet"></div>
+    <h1 class="navbar-text">
+      <a
+        href="/"
+        style="
+          text-decoration: none;
+          color: white;
+          font: 'Inter' sans-serif;
+          font-size: 20px;
+        "
+        >ADPanel</a
+      >
+    </h1>
+
+    <h2 id="file-manager">File Manager</h2>
+    <div id="breadcrumbs"></div>
+    <ul id="entries"></ul>
+    <input type="file" id="fileUpload" /><button onclick="upload()">
+      Upload File
+    </button>
+
+    <div id="editor" style="display: none">
+      <h3 id="edit-path"></h3>
+      <textarea id="edit-content"></textarea><br />
+      <button onclick="save()">Save</button>
+      <button onclick="discard()">Discard</button>
+    </div>
+    <div class="startup-file">Startup</div>
+
+    <script>
+      const bot = "<%= bot %>";
+      const socket = io();
+
+      socket.emit("join", bot);
+
+      socket.on("output", (data) => {
+        document.getElementById("console").textContent += data;
+      });
+
+      socket.on("fileData", (d) => {
+        document.getElementById("editor").style.display = "block";
+        document.getElementById("edit-path").textContent = d.path;
+        const ta = document.getElementById("edit-content");
+        ta.value = d.content;
+        ta.dataset.original = d.content;
+      });
+
+      let currentPath = "";
+      function loadExplorer(path = "") {
+        fetch(`/explore/${bot}?path=${encodeURIComponent(path)}`)
+          .then((r) => r.json())
+          .then((data) => {
+            currentPath = data.path;
+            document.getElementById("breadcrumbs").innerHTML =
+              '<a href="#" onclick="loadExplorer(\'\')">Root</a>' +
+              (data.path ? " / " + data.path : "");
+            const ul = document.getElementById("entries");
+            ul.innerHTML = "";
+            data.entries.forEach((e) => {
+              const li = document.createElement("li");
+              li.textContent = (e.isDir ? "[DIR] " : "") + e.name;
+              li.style.display = "flex";
+              li.style.alignItems = "center";
+              li.style.gap = "8px";
+
+              li.onclick = () => {
+                if (e.isDir) {
+                  loadExplorer(
+                    currentPath ? currentPath + "/" + e.name : e.name
+                  );
+                } else {
+                  socket.emit("readFile", {
+                    bot,
+                    path: currentPath ? currentPath + "/" + e.name : e.name,
+                  });
+                }
+              };
+
+              const del = document.createElement("button");
+              del.textContent = "Delete";
+              del.onclick = (ev) => {
+                ev.stopPropagation();
+                if (
+                  confirm(`Delete ${e.isDir ? "folder" : "file"} "${e.name}"?`)
+                ) {
+                  socket.emit("deleteFile", {
+                    bot,
+                    path: currentPath ? currentPath + "/" + e.name : e.name,
+                    isDir: e.isDir,
+                  });
+                  loadExplorer(currentPath);
+                }
+              };
+
+              const renameBtn = document.createElement("button");
+              renameBtn.textContent = "Rename";
+              renameBtn.onclick = (ev) => {
+                ev.stopPropagation();
+                const newName = prompt(`Rename "${e.name}" to:`);
+                if (!newName || newName.trim() === "")
+                  return alert("Invalid name");
+                fetch("/rename", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    bot,
+                    oldPath: currentPath ? currentPath + "/" + e.name : e.name,
+                    newName: newName.trim(),
+                  }),
+                })
+                  .then((res) => {
+                    if (!res.ok) throw new Error("Rename failed");
+                    return res.text();
+                  })
+                  .then((msg) => {
+                    alert(msg);
+                    loadExplorer(currentPath);
+                  })
+                  .catch((err) => alert(err.message));
+              };
+
+              li.appendChild(renameBtn);
+              li.appendChild(del);
+              ul.appendChild(li);
+            });
+
+            const scripts = data.entries
+              .filter(
+                (e) =>
+                  !e.isDir &&
+                  (e.name.endsWith(".js") || e.name.endsWith(".html"))
+              )
+              .map((e) => e.name);
+
+            document.getElementById("scriptSelect").innerHTML = scripts
+              .map((s) => `<option value="${s}">  ${s}</option>`)
+              .join("");
+          });
+      }
+
+      function run() {
+        document.getElementById("console").textContent = "";
+        const file = document.getElementById("scriptSelect").value;
+        socket.emit("action", {
+          bot,
+          cmd: "run",
+          file,
+          port: document.getElementById("portInputn")?.value,
+        });
+      }
+
+      function stop() {
+        socket.emit("action", { bot, cmd: "stop" });
+      }
+
+      function upload() {
+        const f = document.getElementById("fileUpload").files[0];
+        if (!f) return;
+        const fd = new FormData();
+        fd.append("file", f);
+        fetch(`/upload?`, { method: "POST", body: fd }).then(() =>
+          loadExplorer(currentPath)
+        );
+      }
+
+      function createNew() {
+        const type = prompt(
+          "Type 'file' to create a file or 'folder' to create a folder:"
+        );
+        if (!type || (type !== "file" && type !== "folder"))
+          return alert("Invalid type.");
+
+        const name = prompt(`Enter ${type} name:`);
+        if (!name) return;
+
+        fetch(`/create`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            bot,
+            type,
+            name,
+            path: currentPath,
+          }),
+        })
+          .then((r) => {
+            if (!r.ok) throw new Error("Error creating " + type);
+            return r.text();
+          })
+          .then(() => loadExplorer(currentPath))
+          .catch((err) => alert(err.message));
+      }
+
+      function save() {
+        socket.emit("writeFile", {
+          bot,
+          path: document.getElementById("edit-path").textContent,
+          content: document.getElementById("edit-content").value,
+        });
+      }
+
+      function discard() {
+        const ta = document.getElementById("edit-content");
+        ta.value = ta.dataset.original;
+      }
+
+      document.addEventListener("DOMContentLoaded", () => loadExplorer());
+
+      function sendCommand() {
+        const cmd = document.getElementById("cmdInput").value;
+        if (cmd.trim() !== "") {
+          socket.emit("command", { bot: "<%= bot %>", command: cmd });
+          document.getElementById("cmdInput").value = "";
+        }
+      }
+
+      document
+        .getElementById("cmdInput")
+        .addEventListener("keyup", function (event) {
+          if (event.key === "Enter") {
+            sendCommand();
+          }
+        });
+    </script>
+
+    <script
+      src="https://kit.fontawesome.com/6bcbc61285.js"
+      crossorigin="anonymous"
+    ></script>
+  </body>
+</html>

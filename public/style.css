@@ -1,0 +1,306 @@
+body {
+  font-family: sans-serif;
+  background: #282c34;
+  color: #abb2bf;
+  padding: 20px;
+}
+
+.console {
+  position: absolute;
+  top: 100px;
+}
+
+.pet {
+  position: fixed;
+  padding: 30px;
+  width: 1478px;
+  background: #252733;
+  margin-left: -30px;
+  box-shadow: 0 1px 7px rgba(0,0,0,0.3);
+  margin-top: -40px;
+  z-index: 100;
+}
+
+h1.navbar-text {
+  position: fixed;
+  z-index: 20;
+  font-family: 'Inter' sans-serif;
+  margin-left: 20px;
+  color: white;
+  margin-bottom: 50px;
+  font-size: 20px;
+  top: -2px;
+  z-index: 100;
+}
+
+.bot-item {
+  background: #3e4451;
+  padding: 10px;
+  border-radius: 5px;
+  margin: 10px 0;
+}
+
+.run-button {
+  position: absolute;
+  background-color: green;
+  padding: 5px;
+  border-radius: 20px;
+  margin-top: 480px;
+  margin-left: 1298px;
+  border: none;
+  width: 30px;
+  height: 55px;
+  z-index: 20;
+}
+
+.run-button:hover {
+  background-color: #25FA00;
+  cursor: pointer;
+}
+
+.header {
+  position: absolute;
+  padding: 20px;
+  background-color: #303030;
+  width: 1320px;
+  margin-top: 40px;
+}
+
+.close {
+  cursor: pointer;
+  position: absolute;
+  background-color: #FF605C;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  margin-top: 52px;
+  margin-left: 20px;
+}
+
+.minimize {
+  cursor: pointer;
+  position: absolute;
+  background-color: #FFBD44;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  margin-top: 52px;
+  margin-left: 40px;
+}
+
+.maximize {
+  cursor: pointer;
+  position: absolute;
+  background-color: #00CA56;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  margin-top: 52px;
+  margin-left: 60px;
+}
+
+.brow {
+  position: absolute;
+  padding: 30px;
+  border-radius: 30px;
+  margin-top: 40px;
+  margin-left: 1350px;
+  background-color: #303030;
+  z-index: -1;
+}
+
+.spacc {
+  position: absolute;
+  padding: 20px;
+  margin-top: 40px;
+  margin-left: 1340px;
+  background-color: #303030;
+  z-index: 100;
+}
+
+.browbody {
+  position: absolute;
+  padding: 30px;
+  border-radius: 30px;
+  margin-top: -50px;
+  margin-left: 1351px;
+  background-color: #303030;
+  z-index: -1;
+}
+
+.browcomponent {
+  position: absolute;
+  padding: 20px;
+  margin-top: -30px;
+  margin-left: 1347px;
+  background-color: #303030;
+  z-index: -1;
+}
+
+.body-console {
+  position: absolute;
+  display: flex;
+  padding: 20px;
+  background-color: #303030;
+  height: 430px;
+  width: 30px;
+  margin-top: 70px;
+  box-sizing: border-box;
+  margin-left: 1370px;
+}
+
+.stop-button {
+  position: absolute;
+  background-color: red;
+  padding: 5px;
+  border-radius: 20px;
+  border: none;
+  width: 30px;
+  height: 55px;
+  margin-top: 420px;
+  margin-left: 1298px;
+  z-index: 20;
+}
+
+.stop-button:hover {
+  background-color: #FA463A;
+  cursor: pointer;
+}
+
+.install {
+  position: absolute;
+  background-color: black;
+  padding: 5px;
+  border-radius: 20px;
+  border: none;
+  width: 70px;
+  height: 30px;
+  white-space: nowrap;
+  margin-left: 1150px;
+  margin-top: 10px;
+}
+
+.selects {
+  position: absolute;
+  background-color: black;
+  color: white;
+  width: 70px;
+  height: 30px;
+  border: none;
+  gap: 20px;
+  padding: 5px;
+  border-radius: 20px;
+  margin-left: 1070px;
+  margin-top: 10px;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20fill%3D%22white%22%20height%3D%2210%22%20viewBox%3D%220%200%2024%2024%22%20width%3D%2210%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M7%2010l5%205%205-5z%22/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 10px;
+}
+
+.selects:focus {
+  outline: none;
+}
+
+.selects option {
+  background-color: black;
+  color: white;
+  border: none;
+  border-radius: 10px;
+}
+
+.controls {
+  margin-bottom: 20px;
+}
+
+.startup-file {
+  position: absolute;
+  top: 80px;
+  margin-left: 15px;
+  color: white;
+}
+
+select,
+button,
+input,
+textarea {
+  margin: 5px;
+}
+
+#console {
+  postion: absolute;
+  background: #1e1e1e;
+  color: #98c379;
+  padding: 10px;
+  height: 400px;
+  width: 1350px;
+  overflow-y: auto;
+  border-radius: 5px;
+  margin-top: 100px;
+}
+
+#entries {
+  background: #21252b;
+  padding: 10px;
+  border-radius: 5px;
+  width: 1400px;
+}
+
+#entries li {
+  cursor: pointer;
+  padding: 5px;
+  color: #61dafb;
+  list-style: none;
+}
+
+#breadcrumbs a {
+  color: #61dafb;
+  text-decoration: none;
+}
+
+#editor {
+  background: #21252b;
+  padding: 10px;
+  border-radius: 5px;
+  margin-top: 10px;
+}
+
+#edit-content {
+  width: 100%;
+  height: 500px;
+  background: #282c34;
+  color: #abb2bf;
+  padding: 10px;
+  border: none;
+}
+
+#file-manager {
+  margin-top: 700px;
+}
+
+#scriptSelect {
+  cursor: pointer;
+  border-radius: 20px;
+  background-color: black;
+  color: white;
+  width: 70px;
+  height: 30px;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20fill%3D%22white%22%20height%3D%2210%22%20viewBox%3D%220%200%2024%2024%22%20width%3D%2210%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%3Cpath%20d%3D%22M7%2010l5%205%205-5z%22/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 10px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  gap: 20px;
+  border: none;
+}
+
+#scriptSelect::after {
+  cursor: pointer;
+  border-radius: 20px;
+}

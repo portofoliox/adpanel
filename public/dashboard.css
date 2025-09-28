@@ -1,0 +1,165 @@
+body {
+  font-family: sans-serif;
+  background: #2d3440;
+  color: #abb2bf;
+  padding: 20px;
+}
+
+h1.title {
+  position: relative;
+  z-index: 20;
+  font-family: 'Inter' sans-serif;
+  margin-left: 20px;
+  color: white;
+  margin-bottom: 50px;
+  font-size: 20px;
+  top: -40px;
+}
+
+.start {
+  position: fixed;
+  color: white;
+  text-align: center;
+  font-family: "Bitcount";
+  font-size: 40px;
+  white-space: nowrap;
+  top: 8rem;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.start-description {
+  position: fixed;
+  color: #979c9c;
+  font-family: sans-serif;
+  font-size: 15px;
+  white-space: nowrap;
+  top: 11rem;
+  left: 50%;
+  transform: translate(-50%, -20%);
+}
+
+.header-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20vh;
+  gap: 0.5rem;
+}
+
+.pet {
+  position: absolute;
+  padding: 1.9rem;
+  width: 100%;
+  font-size: 1rem;
+  background: #252733;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.10);
+  box-sizing: border-box;
+  left: 0;
+  top: 0;
+}
+
+.upload-form {
+  position: fixed;
+  unset: all;
+  top: 12rem;
+  left: 50%;
+  border-radius: 20px;
+  white-space: nowrap;
+  transform: translate(-50%);
+
+  display: flex;
+  justify-direction: column;
+  align-items: center;
+}
+
+.upload-form input[type="file"] {
+  margin: 20px;
+  white-space: nowrap;
+}
+
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px 20px;
+  justify-content: center;
+  margin-top: 200px;
+  margin-left: 100px;
+}
+
+.server-box {
+  background: #3e4451;
+  padding: 15px;
+  border-radius: 8px;
+  cursor: pointer;
+  width: 250px;
+  transition: background 0.3s, transform 0.2s;
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px 20px 20px 20px;
+}
+
+.server-box:hover {
+  transform: scale(0.9);
+}
+
+.server-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  color: #fff;
+}
+
+.server-icon {
+  font-size: 20px;
+}
+
+.settings {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 1rem;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.settings i {
+  position: absolute;
+  font-size: 30px;
+  color: #87CEEC;
+  display: block;
+  right: 17px;
+  top: 15px;
+  transition: all 0.2s ease;
+}
+
+.settings:hover i {
+  color: #BAE5F8;
+}
+
+.upload {
+  all: unset;
+  border-radius: 20px;
+  cursor: pointer;
+  width: 100px;
+  height: 30px;
+  background-color: white;
+  color: black;
+  font-family: sans-serif;
+  border: none;
+  text-align: center;
+  padding-left: 5px;
+  white-space: nowrap;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.upload:hover {
+  background-color: #CCCCCC;
+  white-space: nowrap;
+}
