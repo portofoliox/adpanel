@@ -1,114 +1,145 @@
-<!DOCTYPE html>
-<!-- saved from url=(0029)https://panel.antonn.ro/login -->
-<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-        
-        <title>Sign Up</title>
-        <link rel="stylesheet" href="/login.css?v=<%= Date.now() %>">
-        <link id="favicon" rel="icon" type="image/png" href="/images/adpanel-dark.png">
-        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.7.2/css/all.css">
-        <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.7.2/css/sharp-solid.css">
-        <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.7.2/css/sharp-regular.css">
-        <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.7.2/css/sharp-light.css">
-        <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.7.2/css/duotone.css">
-        <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.7.2/css/brands.css">
-        <link rel="preconnect" href="https://fonts.googleapis.com/">
-        <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
-        <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <!DOCTYPE html>
+          <html lang="ro"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+                  <title>Login ADPanel</title>
+                  <link rel="stylesheet" href="/login.css">
+                  <link rel="icon" type="image/png" sizes="16x16" href="/images/adpanel-white.png">
+                  <link rel="preconnect" href="https://fonts.googleapis.com/">
+                  <link rel="preconnect" href="https://fonts.gstatic.com/" crossorigin="">
+                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <link
+              rel="stylesheet"
+              href="https://site-assets.fontawesome.com/releases/v7.0.0/css/all.css"
+            />
+
+            <link
+              rel="stylesheet"
+              href="https://site-assets.fontawesome.com/releases/v7.0.0/css/sharp-solid.css"
+            />
+
+            <link
+              rel="stylesheet"
+              href="https://site-assets.fontawesome.com/releases/v7.0.0/css/sharp-regular.css"
+            />
+
+            <link
+              rel="stylesheet"
+              href="https://site-assets.fontawesome.com/releases/v7.0.0/css/sharp-light.css"
+            />
+
+            <link
+              rel="stylesheet"
+              href="https://site-assets.fontawesome.com/releases/v7.0.0/css/duotone.css"
+            />
+            <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+      </head>
+
+                  <body>
+                  <video autoplay muted loop class="video">
+                      <source src="https://files.catbox.moe/znke1x.mp4" type="video/mp4">
+                      Browser-ul tău nu suportă video.
+                  </video>
+
+    <svg xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%">
+                <feTurbulence type="fractalNoise" baseFrequency="0.008 0.008" numOctaves="2" seed="92" result="noise" />
+                <feGaussianBlur in="noise" stdDeviation="2" result="blurred" />
+                <feDisplacementMap in="SourceGraphic" in2="blurred" scale="77" xChannelSelector="R" yChannelSelector="G" />
+            </filter>
+        </defs>
+    </svg>
 
 
-<script>
-      const darkFavicon = '/images/adpanel-white.png';
-      const lightFavicon = '/images/adpanel-dark.png';
+                  <form method="POST" action="/login">
+                    <i class="fa-solid fa-envelope" style="position: absolute; color: #4F4F4F; margin-top: 12px; margin-left: -25px; font-size: 16px;"></i>
+                    <input type="email" name="email" placeholder="Email" required"="" style="color: #424242; border-radius: 10px; padding-left: 40px; height: 20px; border: none; outline: none;  width: 335px; margin-left: -40px;">
+                    <i class="fa-solid fa-lock-keyhole" style="position: absolute; color: #4F4F4F; margin-top: 61px; height: 20px; margin-left: -25px;"></i>
+                    <input type="password" name="password" placeholder="Password" required="" style="padding-left: 40px; border-radius: 10px; height: 20px; color: #424242; border: none; outline: none;  width: 335px; margin-left: -40px;">
+                    <i class="fa-light fa-fingerprint" style="position: absolute; color: #4F4F4F; margin-top: 112px; z-index: 100; margin-left: -25px;"></i>
+                    <input type="text" name="code" placeholder="2FA Code" required="" style="position: relative; color: #424242; border-radius: 10px; height: 20px; padding-left: 40px; border: none; outline: none;  width: 335px; margin-left: -40px;">
+                    <button type="submit" class="get-started">Get Started</button>
+                    <a class="forgot-password" href="/forgot-password.ejs">Forgot password?</a>
+                    <div class="circle-icon">
+                      <i class="fa-regular fa-arrow-right-to-bracket" style="color: black; font-size: 25px; margin-top: -50px; margin-left: -12px;"></i>
+                    </div>
+                  </form>
+            <div class="menu">
+             </div>
+         <div class="sign-up-subline">
+             <a class="sign-up-sublines">
+              and make something special
+            </a>
+        </div>
 
-      const darkApple = '/images/adpanel-white.png';
-      const lightApple = '/images/adpanel-dark.png';
-
-      function updateIcons() {
-      const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-      document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach(el => el.remove());
-
-      const linkFavicon = document.createElement('link');
-      linkFavicon.rel = 'icon';
-      linkFavicon.type = 'image/png';
-      linkFavicon.href = isDark ? darkFavicon : lightFavicon;
-      document.head.appendChild(linkFavicon);
-
-      const linkApple = document.createElement('link');
-      linkApple.rel = 'apple-touch-icon';
-      linkApple.type = 'image/png';
-      linkApple.href = isDark ? darkApple : lightApple;
-      document.head.appendChild(linkApple);
-    }
-
-    updateIcons();
-
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateIcons);
-</script>
-
-
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const arrow = document.getElementById('arrowBtn');
-    const watermark = document.getElementById('watermark');
-
-    arrow.addEventListener('click', () => {
-      console.log("CLICK detectat");
-      arrow.classList.toggle('open');
-      watermark.classList.toggle('open');
-    });
-  });
-</script>
-
-
-</head>
-      <body>
-        <video src="/images/bgvid.mp4" autoplay="" muted="" loop="" class="video"></video>
-
-        
-
-        <form method="POST" action="https://panel.antonn.ro/login">
-          <i class="fa-solid fa-envelope" style="position: absolute; color: #4F4F4F; margin-top: 12px; margin-left: -25px; font-size: 16px;"></i>
-          <input type="email" name="email" placeholder="Email" required"="" style="color: #424242; border-radius: 10px; padding-left: 40px; height: 20px; border: none; outline: none;  width: 335px; margin-left: -40px;">
-          <i class="fa-solid fa-lock-keyhole" style="position: absolute; color: #4F4F4F; margin-top: 60px; height: 20px; margin-left: -25px;"></i>
-          <input type="password" name="password" placeholder="Password" required="" style="padding-left: 40px; border-radius: 10px; height: 20px; color: #424242; border: none; outline: none;  width: 335px; margin-left: -40px;">
-          <i class="fa-light fa-fingerprint" style="position: absolute; color: #4F4F4F; margin-top: 112px; z-index: 100; margin-left: -25px;"></i>
-          <input type="text" name="code" placeholder="2FA Code" required="" style="position: relative; color: #424242; border-radius: 10px; height: 20px; padding-left: 40px; border: none; outline: none;  width: 335px; margin-left: -40px;">
-          <button type="submit" class="get-started">Get Started</button>
-          <a class="forgot-password" href="https://panel.antonn.ro/forgot-password">Forgot password?</a>
-          <div class="circle-icon">
-            <i class="fa-regular fa-arrow-right-to-bracket" style="color: black; font-size: 25px; margin-top: -50px; margin-left: -7px;"></i>
+          <div class="sign-ups">
+            <a class="sign-up-desc">
+              Secure manage your applications with style
+            </a>
           </div>
-        </form>
-        <div class="menu">
-</div>
+                  <div>
+                    <a class="sign-up">
+                      Sign in with email
+                    </a>
+                  </div>
+        <div class="watermark" id="watermark">
+          <img src="https://files.catbox.moe/gemg60.webp" alt="watermark" draggable="false">
+        </div>
 
-    <div class="sign-up-details">
-        <a class="sign-up">Sign in with email</a>
-</div>
+      <div id="menuBtn">
+        <span></span>
+        <span></span>
+      </div>
 
-    <div class="sign-up-description">
-        <a class="sign-up-desc">
-            Securely manage your applications with style
-        </a>
-    </div>
 
-    <div class="sign-up-description-subline">
-        <a class="sign-up-subline">
-             and make something special
-        </a>
-    </div>
 
-<a href="https://github.com/antonndev/adpanel" target="_blank" class="watermark" id="watermark">
-  <img src="/images/watermark.png" alt="ADPanel" oncontextmenu="return false" draggable="false">
-</a>
+                      <script>
+        // Drag functionality for .menu
+        dragElement(document.querySelector('.menu'));
+        function dragElement(elmnt) {
+            let startX = 0, startY = 0;
 
-  <div class="arrow" id="arrowBtn">
-    <div class="arrow-line line1"></div>
-    <div class="arrow-line line2"></div>
-  </div>
+            const onPointerDown = e => {
+                e.preventDefault();
+                const rect = elmnt.getBoundingClientRect();
+                elmnt.style.position = 'absolute';
+                elmnt.style.top = rect.top + 'px';
+                elmnt.style.left = rect.left + 'px';
+                elmnt.style.transform = 'none';
 
-    </body>
-    </html>
+                startX = e.clientX;
+                startY = e.clientY;
+                document.addEventListener('pointermove', onPointerMove);
+                document.addEventListener('pointerup', onPointerUp, { once: true });
+            };
+
+            const onPointerMove = e => {
+                e.preventDefault();
+                const dx = e.clientX - startX;
+                const dy = e.clientY - startY;
+                startX = e.clientX;
+                startY = e.clientY;
+                elmnt.style.left = (elmnt.offsetLeft + dx) + 'px';
+                elmnt.style.top = (elmnt.offsetTop + dy) + 'px';
+            };
+
+            const onPointerUp = () => {
+                document.removeEventListener('pointermove', onPointerMove);
+            };
+
+            elmnt.addEventListener('pointerdown', onPointerDown);
+        }
+    </script>
+
+<script>
+const menuBtn = document.getElementById('menuBtn');
+const watermark = document.getElementById('watermark');
+
+menuBtn.addEventListener('click', () => {
+  menuBtn.classList.toggle('active'); // rotește liniile
+  watermark.classList.toggle('show'); // arată/ascunde watermark
+});
+</script>
+
+</body>
+</html>
