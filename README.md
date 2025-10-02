@@ -17,6 +17,7 @@ git clone https://github.com/portofoliox/adpanel.git && cd adpanel && bash initi
 # How to change password for Admin user or something else?
  **Just run this in your terminal:**
  
-```bash initialize.sh
+```bash
+initialize.sh
 ```
  
