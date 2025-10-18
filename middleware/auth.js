@@ -30,7 +30,7 @@ function authMiddleware(req, res, next) {
     // user not found, clear session and redirect to login
     req.session.destroy(() => {});
     return res.redirect("/login");
-  }\
+  }
 
   next();
 }
