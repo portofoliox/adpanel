@@ -11,7 +11,7 @@
 **Just run this in your terminal:**
 
 ```bash
-git clone https://github.com/portofoliox/adpanel.git && cd adpanel && bash initialize.sh && bash start.sh
+git clone https://github.com/portofoliox/adpanel.git && cd adpanel && chmod +x initialize.sh && bash initialize.sh && chmod +x start.sh && bash start.sh
 ```
 
 # How to change password for Admin user or something else?
@@ -20,4 +20,5 @@ git clone https://github.com/portofoliox/adpanel.git && cd adpanel && bash initi
 ```
 bash initialize.sh
 ```
- 
+
+ **Or you can access Panel Settings from the dashboard and click on Account category**
