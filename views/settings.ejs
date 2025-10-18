@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Modern Settings — Background & Theme</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root{
+      --accent: #4f46e5;
+      --bg: #f3f4f6;
+      --settings-bg: #e9edf2;
+      --panel-gray: #282c34;
+      --glass: rgba(255,255,255,0.6);
+      --radius: 12px;
+      --shadow: 0 8px 30px rgba(16,24,40,0.12);
+      --muted: #6b7280;
+      --text: #0f172a;
+      --btn-grad: linear-gradient(90deg, rgba(255,255,255,0.96), rgba(245,247,255,0.96));
+      --btn-color: #071232;
+      --card-contrast-bg: rgba(255,255,255,0.85);
+      --modal-bg: #d7dee6;
+      --hover-border: rgba(15,23,42,0.08);
+      --gap: 24px;
+    }
+
+    [data-theme="dark"]{
+      --accent: #7c3aed;
+      --bg: linear-gradient(180deg,#282c34 0%, #33383f 100%);
+      --settings-bg: rgba(30,36,40,0.92);
+      --panel-gray: #282c34;
+      --glass: rgba(255,255,255,0.03);
+      --shadow: 0 10px 30px rgba(2,6,23,0.6);
+      --muted: #9ca3af;
+      --text: #e6eef8;
+      --btn-grad: linear-gradient(90deg, rgba(40,44,50,0.92), rgba(48,52,58,0.94));
+      --btn-color: #e6eef8;
+      --card-contrast-bg: rgba(0,0,0,0.45);
+      --modal-bg: rgba(18,20,22,0.96);
+      --hover-border: rgba(255,255,255,0.07);
+    }
+
+    body.compact { --gap: 12px; }
+    body.no-animations * { transition: none !important; animation: none !important; }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+      background: var(--bg);
+      color:var(--text);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      padding:20px;
+      transition:background .45s ease,color .35s ease;
+    }
+
+    .theme-overlay{position:fixed;inset:0;z-index:9998;pointer-events:none;opacity:0;transition:opacity .28s ease;background:linear-gradient(135deg, rgba(255,255,255,0.03), rgba(0,0,0,0.04));}
+    .theme-overlay.show{opacity:1}
+
+    .app{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:260px 1fr;gap:var(--gap);align-items:start}
+    .sidebar{
+      background:linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.5));
+      border-radius:12px;
+      padding:12px;
+      box-shadow:var(--shadow);
+      position:sticky;
+      top:18px;
+      height:auto;
+      max-height: calc(100vh - 36px);
+      overflow:auto;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+    }
+    [data-theme="dark"] .sidebar{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));}
+
+    .brand{display:flex;align-items:center;gap:12px;margin-bottom:6px;flex:0 0 auto}
+    .brand .logo{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--panel-gray);color:#fff;font-weight:700;font-size:18px;box-shadow:0 6px 18px rgba(40,44,52,0.12)}
+    .brand h1{font-size:14px;margin:0}
+    .brand p{margin:0;font-size:12px;color:var(--muted)}
+
+    .nav{margin-top:6px;flex:1 1 auto;overflow:auto}
+    .nav button{width:100%;display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;border:0;background:transparent;color:var(--muted);cursor:pointer;font-weight:600;transition:all .18s ease;white-space:nowrap}
+    .nav button.active{background:linear-gradient(90deg,rgba(79,70,229,0.08),rgba(79,70,229,0.04));color:var(--accent);box-shadow:inset 0 1px 0 rgba(255,255,255,0.04)}
+    .nav button i{width:18px;text-align:center}
+
+    .panel{background:var(--settings-bg);border-radius:12px;padding:18px;box-shadow:var(--shadow);min-height:360px;position:relative;overflow:hidden;transition:transform .28s cubic-bezier(.2,.9,.2,1),box-shadow .2s}
+    .panel:hover{transform:translateY(-3px)}
+    .panel h2{margin:0 0 6px 0;font-family:'Space Grotesk',sans-serif}
+    .panel p{margin:0 0 14px 0;color:var(--muted)}
+
+    .closeEscFixed{position:fixed;right:14px;top:14px;width:52px;height:52px;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--btn-grad);cursor:pointer;border:1px solid rgba(15,23,42,0.06);font-weight:700;z-index:9999;transition:transform .14s ease,box-shadow .14s ease,background .14s ease}
+    .closeEscFixed:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 12px 30px rgba(2,6,23,0.12)}
+    .closeEscFixed i{font-size:15px;color:var(--btn-color)}
+    .closeEscFixed small{display:block;font-size:10px;color:var(--muted);margin-top:2px}
+
+    .layout-inner{display:flex;gap:16px}
+    .left-col{width:320px}
+
+    .theme-btn{padding:10px 14px;border-radius:10px;border:0;background:var(--btn-grad);color:var(--btn-color);font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 8px 20px rgba(16,24,40,0.06);transition:transform .12s ease,box-shadow .12s ease,opacity .12s ease}
+    .theme-btn:hover{transform:translateY(-2px)}
+    .theme-btn.active{box-shadow:0 12px 36px rgba(16,24,40,0.12);outline:3px solid rgba(79,70,229,0.06)}
+
+    .btn{padding:10px 14px;border-radius:10px;border:0;background:var(--btn-grad);color:var(--btn-color);font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 8px 20px rgba(16,24,40,0.06);transition:transform .12s ease,box-shadow .12s ease,opacity .12s ease}
+    .btn:hover{transform:translateY(-3px);box-shadow:0 14px 36px rgba(16,24,40,0.12)}
+    .btn.ghost{background:transparent;border:1px solid rgba(15,23,42,0.06);color:var(--text);box-shadow:none}
+    [data-theme="dark"] .btn.ghost{border:1px solid rgba(255,255,255,0.04);color:var(--text)}
+
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.75));padding:12px;border-radius:10px;box-shadow:0 6px 18px rgba(15,23,42,0.06)}
+    [data-theme="dark"] .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));}
+
+    .bg-select{margin-top:10px}
+    .bg-preview{height:120px;border-radius:10px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;transition:all .18s ease;border:5px solid var(--panel-gray)}
+    .bg-preview .label{position:absolute;left:10px;top:8px;background:rgba(0,0,0,0.12);padding:6px 10px;border-radius:8px;font-weight:600;font-size:13px}
+    .controls{display:flex;gap:10px;align-items:center;margin-top:10px}
+    .color-dot{width:42px;height:42px;border-radius:8px;border:4px solid #fff;box-shadow:0 8px 18px rgba(2,6,23,0.08);display:flex;align-items:center;justify-content:center;font-weight:700}
+    input[type=color]{width:42px;height:42px;border-radius:8px;border:0;padding:0;margin:0;background:transparent;cursor:pointer}
+    .field{flex:1}
+    .field input[type=text]{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(15,23,42,0.06)}
+
+    .thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
+    .thumb{height:70px;border-radius:8px;overflow:hidden;position:relative;cursor:pointer;border:3px solid transparent;transition:transform .14s,box-shadow .14s}
+    .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+    .thumb:hover{transform:translateY(-6px);box-shadow:0 10px 30px rgba(2,6,23,0.12)}
+    .thumb.selected{border-color:var(--accent)}
+
+    .upload{margin-top:12px;display:flex;gap:8px;align-items:center}
+    .upload input[type=file]{display:none}
+    .upload .upload-btn{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;border:1px dashed rgba(15,23,42,0.06);background:transparent;cursor:pointer}
+
+    .note{font-size:13px;color:var(--muted);margin-top:12px}
+    .prefs-list{margin-top:10px;display:grid;gap:8px}
+    .pref-row{display:flex;align-items:center;justify-content:space-between;padding:8px;border-radius:10px;background:var(--card-contrast-bg);border:1px solid rgba(15,23,42,0.04)}
+    .pref-row small{color:var(--muted)}
+
+    .content-area{padding:8px 0}
+    .panel-section{display:none}
+    .panel-section.active{display:block;animation:fadeIn .18s ease both}
+
+    .clickable-card{cursor:pointer;transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease;border:1px solid transparent;padding:10px}
+    .clickable-card:hover{transform:translateY(-6px);box-shadow:0 18px 40px rgba(16,24,40,0.12);border:1px solid var(--hover-border)}
+
+    .modal-overlay{position:fixed;inset:0;background:rgba(2,6,23,0.6);display:none;align-items:center;justify-content:center;z-index:10000}
+    .modal-overlay.show{display:flex}
+    .modal{width:440px;background:var(--modal-bg);border-radius:12px;padding:16px;box-shadow:0 20px 60px rgba(2,6,23,0.4);transform:translateY(12px);opacity:0;transition:all .22s ease;color:var(--text)}
+    .modal.show{transform:none;opacity:1}
+    .modal h3{margin:0 0 6px 0}
+    .modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+    @media (max-width:760px){
+      .app{grid-template-columns:1fr;padding:12px}
+      .sidebar{position:relative;height:auto;margin-bottom:12px;max-height:none;overflow:visible}
+      .layout-inner{flex-direction:column}
+      .left-col{width:100%}
+      .thumbs{grid-template-columns:repeat(2,1fr)}
+      .bg-preview{height:100px}
+      .closeEscFixed{right:12px;top:12px;width:48px;height:48px}
+    }
+
+    @media (max-width:420px){
+      .thumbs{grid-template-columns:repeat(2,1fr)}
+      .brand .logo{width:36px;height:36px;font-size:16px}
+    }
+  </style>
+</head>
+<body>
+  <div id="themeOverlay" class="theme-overlay" aria-hidden="true"></div>
+
+  <div class="closeEscFixed" id="closeEscFixed" title="Esc → Close (go to /)">
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center">
+      <i class="fa-solid fa-xmark"></i>
+      <small>ESC</small>
+    </div>
+  </div>
+
+  <div class="app">
+    <aside class="sidebar" aria-label="Sidebar">
+      <div class="brand">
+        <div class="logo"><i class="fa-solid fa-cog"></i></div>
+        <div>
+          <h1>Settings</h1>
+          <p>Make ADPanel yours.</p>
+        </div>
+      </div>
+
+      <nav class="nav" id="sidebarNav">
+        <button data-panel="preferences" class="active"><i class="fa-solid fa-cog"></i> Preferences</button>
+        <button data-panel="account"><i class="fa-solid fa-user"></i> Account</button>
+        <button data-panel="security"><i class="fa-solid fa-shield-halved"></i> Security</button>
+        <button data-panel="integrations"><i class="fa-solid fa-file-import"></i> Integrations</button>
+      </nav>
+
+      <div style="margin-top:12px;border-top:1px dashed rgba(15,23,42,0.04);padding-top:12px;flex:0 0 auto">
+        <div style="font-weight:700;margin-bottom:8px">Theme</div>
+        <div style="display:flex;gap:8px">
+          <div style="flex:1">
+            <button id="themeLight" class="theme-btn">White</button>
+          </div>
+          <div style="flex:1">
+            <button id="themeDark" class="theme-btn">Dark</button>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+
+    <main>
+      <section class="panel" aria-labelledby="settings-title">
+        <h2 id="settings-title">Settings</h2>
+        <p>Main settings area — choose a section on the left.</p>
+
+        <div class="layout-inner">
+          <div class="left-col" id="leftCol">
+            <div class="card" id="bgCard">
+              <div style="display:flex;justify-content:space-between;align-items:center">
+                <div>
+                  <div style="font-weight:700">Background selection</div>
+                  <div style="font-size:13px;color:var(--muted)">Main color default: <code>#282c34</code></div>
+                </div>
+                <div style="font-size:18px;color:var(--muted)"><i class="fa-regular fa-image"></i></div>
+              </div>
+
+              <div class="bg-select">
+                <div class="bg-preview" id="bgPreview" style="background-color:var(--panel-gray)">
+                  <div class="label">Main color</div>
+                  <div style="text-align:center;opacity:0.92">
+                    <div style="font-weight:700;font-size:16px" id="bgHex">#282c34</div>
+                    <div style="font-size:12px;color:rgba(255,255,255,0.86)">Preview area</div>
+                  </div>
+                </div>
+
+                <div class="controls">
+                  <div class="color-dot" id="colorDot"> </div>
+                  <input type="color" id="colorPicker" value="#282c34" title="Pick main color">
+
+                  <div class="field">
+                    <input type="text" id="hexInput" value="#282c34" aria-label="Hex input">
+                  </div>
+
+                  <button class="btn" id="applyColorBtn"><i class="fa-solid fa-check"></i> Apply</button>
+                </div>
+
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px">
+                  <div style="font-weight:700">Choose an image</div>
+                  <div style="font-size:13px;color:var(--muted)">Thumbnail previews</div>
+                </div>
+
+                <div class="thumbs" id="thumbs"></div>
+
+                <div class="upload">
+                  <label class="upload-btn" for="uploadFile"><i class="fa-solid fa-upload"></i> Upload</label>
+                  <input id="uploadFile" type="file" accept="image/*">
+
+                  <div style="flex:1;display:flex;gap:8px">
+                    <input type="text" id="urlInput" placeholder="Or paste image URL" style="flex:1;padding:10px;border-radius:8px;border:1px solid rgba(15,23,42,0.06)">
+                    <button class="btn ghost" id="useUrlBtn">Use</button>
+                  </div>
+                </div>
+
+                <div class="note">Note: background set here will be applied to the dashboard and main style files.</div>
+
+              </div>
+
+            </div>
+
+            <div class="card" style="margin-top:10px">
+              <div style="font-weight:700">Other preferences</div>
+              <div class="prefs-list">
+                <div class="pref-row">
+                  <div>
+                    <div style="font-weight:700">Density</div>
+                    <small class="muted">Compact / Comfortable</small>
+                  </div>
+                  <div>
+                    <select id="densitySelect" style="padding:8px;border-radius:8px">
+                      <option value="comfortable">Comfortable</option>
+                      <option value="compact">Compact</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="pref-row">
+                  <div>
+                    <div style="font-weight:700">Animations</div>
+                    <small class="muted">Enable/Disable UI animations</small>
+                  </div>
+                  <div>
+                    <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="animationsToggle" checked> On</label>
+                  </div>
+                </div>
+
+                <div class="pref-row">
+                  <div>
+                    <div style="font-weight:700">Accent color</div>
+                    <small class="muted">Change UI accent color</small>
+                  </div>
+                  <div>
+                    <input type="color" id="accentPicker" value="#4f46e5">
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+
+          <div style="flex:1">
+            <div class="content-area">
+              <div id="preferences" class="panel-section active">
+                <div style="font-weight:700;margin-bottom:10px">Preferences</div>
+                <p style="color:var(--muted)">Main customization options: color, background image, density and animations.</p>
+
+                <div style="margin-top:12px;display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
+                  <div style="padding:12px;border-radius:10px;background:var(--card-contrast-bg);color:var(--text)">
+                    <div style="font-weight:700">Saved background</div>
+                    <div id="savedBg" style="margin-top:8px;color:var(--text)">None</div>
+                  </div>
+                  <div style="padding:12px;border-radius:10px;background:var(--card-contrast-bg);color:var(--text)">
+                    <div style="font-weight:700">Theme</div>
+                    <div id="savedTheme" style="margin-top:8px;color:var(--text)">White</div>
+                  </div>
+                </div>
+
+              </div>
+
+              <div id="account" class="panel-section">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                  <div>
+                    <div style="font-weight:700">Account</div>
+                    <div style="color:var(--muted)">Account settings</div>
+                  </div>
+                </div>
+
+                <div style="margin-top:12px;display:grid;gap:8px">
+
+                  <div id="changePassCard" class="clickable-card" style="margin-top:6px;padding:12px;border-radius:10px;background:var(--card-contrast-bg);">
+                    <div style="display:flex;justify-content:space-between;align-items:center">
+                      <div>
+                        <div style="font-weight:700">Change password</div>
+                        <small style="color:var(--muted)">Requires current password & 2FA at login (if enabled)</small>
+                      </div>
+                      <div style="font-size:18px;color:var(--muted)"><i class="fa-solid fa-key"></i></div>
+                    </div>
+                  </div>
+
+                  <div style="margin-top:10px;padding:10px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(15,23,42,0.04);font-size:13px;color:var(--muted)">
+                    <strong>NOTE:</strong> Other settings are changed via the <code>initialize.sh</code> script in the <code>adpanel</code> folder.
+                  </div>
+
+                </div>
+              </div>
+
+              <div id="security" class="panel-section">
+                <div style="font-weight:700">Security</div>
+                <div style="color:var(--muted);margin-top:8px">2FA, password and active sessions</div>
+
+                <div style="margin-top:12px;display:grid;gap:8px">
+                  <div style="padding:10px;border-radius:8px;background:var(--card-contrast-bg)">
+                    <div style="font-weight:700">Two-factor authentication</div>
+                    <small style="color:var(--muted)">Enabled</small>
+                  </div>
+                  <div style="padding:10px;border-radius:8px;background:var(--card-contrast-bg)">
+                    <div style="font-weight:700">Active sessions</div>
+                    <small style="color:var(--muted)">1 active session (this browser)</small>
+                  </div>
+                </div>
+
+              </div>
+
+              <div id="integrations" class="panel-section">
+                <div style="font-weight:700">Integrations</div>
+                <div style="color:var(--muted);margin-top:8px">Connect external services</div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </section>
+    </main>
+  </div>
+
+  <div id="modalOverlay" class="modal-overlay" aria-hidden="true">
+    <div class="modal" id="changeModal">
+      <h3>Change password</h3>
+      <div style="margin-top:10px;display:grid;gap:8px">
+        <input type="password" id="modalCurrent" placeholder="Current password" style="padding:10px;border-radius:8px;border:1px solid rgba(15,23,42,0.06)">
+        <input type="password" id="modalNew" placeholder="New password (min 8 chars)" style="padding:10px;border-radius:8px;border:1px solid rgba(15,23,42,0.06)">
+        <input type="password" id="modalConfirm" placeholder="Confirm new password" style="padding:10px;border-radius:8px;border:1px solid rgba(15,23,42,0.06)">
+      </div>
+      <div class="actions">
+        <button class="btn ghost" id="modalCancel">Cancel</button>
+        <button class="btn" id="modalSave">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const THEME_KEY = 'ui-theme';
+    const BG_KEY = 'ui-background';
+    const ACCENT_KEY = 'ui-accent';
+    const DENSITY_KEY = 'ui-density';
+    const ANIM_KEY = 'ui-animations';
+
+    const themeLight = document.getElementById('themeLight');
+    const themeDark = document.getElementById('themeDark');
+    const body = document.body;
+    const sidebarNav = document.getElementById('sidebarNav');
+    const sections = document.querySelectorAll('.panel-section');
+    const closeEscFixed = document.getElementById('closeEscFixed');
+    const leftCol = document.getElementById('leftCol');
+    const themeOverlay = document.getElementById('themeOverlay');
+
+    const modalOverlay = document.getElementById('modalOverlay');
+    const changeModal = document.getElementById('changeModal');
+    const changePassCard = document.getElementById('changePassCard');
+    const modalCancel = document.getElementById('modalCancel');
+    const modalSave = document.getElementById('modalSave');
+
+    function applyTheme(theme, animate = true){
+      if(animate){ themeOverlay.classList.add('show'); setTimeout(()=> themeOverlay.classList.remove('show'), 420); }
+      if(theme === 'dark') body.setAttribute('data-theme','dark'); else body.removeAttribute('data-theme');
+      themeLight.classList.remove('active'); themeDark.classList.remove('active'); if(theme === 'dark') themeDark.classList.add('active'); else themeLight.classList.add('active');
+      document.getElementById('savedTheme').textContent = theme === 'dark' ? 'Dark' : 'White';
+    }
+
+    const savedTheme = localStorage.getItem(THEME_KEY) || 'dark';
+    applyTheme(savedTheme, false);
+    themeLight.addEventListener('click', ()=>{ localStorage.setItem(THEME_KEY,'white'); applyTheme('white', true); });
+    themeDark.addEventListener('click', ()=>{ localStorage.setItem(THEME_KEY,'dark'); applyTheme('dark', true); });
+
+    sidebarNav.addEventListener('click', (e)=>{
+      const btn = e.target.closest('button'); if(!btn) return;
+      sidebarNav.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const panel = btn.dataset.panel;
+      if(panel === 'preferences') leftCol.style.display = ''; else leftCol.style.display = 'none';
+      sections.forEach(s=>s.classList.remove('active'));
+      const target = document.getElementById(panel); if(target) target.classList.add('active');
+    });
+
+    function goHome(){ window.location.href = '/'; }
+    closeEscFixed.addEventListener('click', goHome);
+    document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape') goHome(); });
+
+    const presets = [
+      {id:1,url:'https://images.hdqwalls.com/wallpapers/waves-digital-art-4k-m8.jpg'},
+      {id:2,url:'https://images.hdqwalls.com/wallpapers/colorful-mountains-night-minimal-8k-w5.jpg'},
+      {id:3,url:'https://raw.githubusercontent.com/BridgeHosting/manelemp3/refs/heads/main/manele/sunset-scenery-minimalist-digital-art-8k-wallpaper-uhdpaper.com-172%405%40b.webp'},
+      {id:4,url:'https://cdn.pixabay.com/photo/2024/07/19/08/16/waves-8905720_1280.png'}
+    ];
+
+    const thumbsEl = document.getElementById('thumbs');
+    const bgPreview = document.getElementById('bgPreview');
+    const colorPicker = document.getElementById('colorPicker');
+    const hexInput = document.getElementById('hexInput');
+    const colorDot = document.getElementById('colorDot');
+    const applyColorBtn = document.getElementById('applyColorBtn');
+    const bgHex = document.getElementById('bgHex');
+    const uploadFile = document.getElementById('uploadFile');
+    const urlInput = document.getElementById('urlInput');
+    const useUrlBtn = document.getElementById('useUrlBtn');
+    const densitySelect = document.getElementById('densitySelect');
+    const animationsToggle = document.getElementById('animationsToggle');
+    const accentPicker = document.getElementById('accentPicker');
+    const savedBg = document.getElementById('savedBg');
+
+    // helper: send background update to panel server
+    async function sendBackgroundToServer(obj) {
+      // obj = { type: 'color'|'url'|'image'|'upload', value: '...' }
+      try {
+        const res = await fetch('/api/settings/background', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(obj)
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(()=>({error:'failed'}));
+          console.warn("Server returned error:", err);
+        } else {
+          // optional: small visual confirmation
+          console.log("Background updated on server");
+        }
+      } catch (e) {
+        console.error("Failed to send background to server", e);
+      }
+    }
+
+    presets.forEach(p => {
+      const el = document.createElement('div');
+      el.className = 'thumb';
+      el.dataset.url = p.url;
+      el.innerHTML = `<img src="${p.url}" alt="preset-${p.id}">`;
+      el.addEventListener('click', () => selectThumb(el));
+      thumbsEl.appendChild(el);
+    });
+
+    function selectThumb(el){
+      document.querySelectorAll('.thumb').forEach(t=>t.classList.remove('selected'));
+      el.classList.add('selected');
+      const url = el.dataset.url;
+      bgPreview.style.backgroundImage = `url(${url})`;
+      bgPreview.style.backgroundSize = 'cover';
+      bgPreview.style.backgroundPosition = 'center';
+      const obj = {type:'url', value:url};
+      localStorage.setItem(BG_KEY, JSON.stringify(obj));
+      updateSavedBgText();
+      sendBackgroundToServer(obj);
+    }
+
+    function setColor(hex){
+      colorPicker.value = hex;
+      hexInput.value = hex;
+      colorDot.style.background = hex;
+      bgPreview.style.backgroundImage = 'none';
+      bgPreview.style.backgroundColor = hex;
+      bgHex.textContent = hex;
+      const obj = {type:'color', value:hex};
+      localStorage.setItem(BG_KEY, JSON.stringify(obj));
+      updateSavedBgText();
+      sendBackgroundToServer(obj);
+    }
+
+    const bgSaved = localStorage.getItem(BG_KEY);
+    if(bgSaved){
+      try{
+        const v = JSON.parse(bgSaved);
+        if(v.type === 'image' || v.type === 'url' || v.type === 'upload'){
+          bgPreview.style.backgroundImage = `url(${v.value})`;
+          bgPreview.style.backgroundSize = 'cover';
+          bgPreview.style.backgroundPosition = 'center';
+        } else {
+          bgPreview.style.backgroundImage = 'none';
+          bgPreview.style.backgroundColor = v.value;
+          colorPicker.value = v.value;
+          hexInput.value = v.value;
+          colorDot.style.background = v.value;
+          bgHex.textContent = v.value;
+        }
+      } catch(e){
+        console.warn('invalid bg saved');
+      }
+    } else { setColor('#282c34'); }
+
+    function updateSavedBgText(){
+      const raw = localStorage.getItem(BG_KEY);
+      if(!raw){ savedBg.textContent = 'None'; return; }
+      try{ const v = JSON.parse(raw); savedBg.textContent = v.type + ' — ' + (typeof v.value === 'string' && v.value.length>40? v.value.slice(0,40)+'...': v.value); }catch(e){ savedBg.textContent = 'None' }
+    }
+    updateSavedBgText();
+
+    colorPicker.addEventListener('input', (e)=> setColor(e.target.value));
+    hexInput.addEventListener('change', (e)=>{ const v = e.target.value.trim(); if(/^#([0-9A-Fa-f]{3}){1,2}$/.test(v)) setColor(v); else alert('Please enter a valid hex, e.g. #282c34'); });
+    applyColorBtn.addEventListener('click', ()=>{ const h = hexInput.value.trim(); if(/^#([0-9A-Fa-f]{3}){1,2}$/.test(h)){ setColor(h); console.log('Applied color selection:', h); } else alert('Invalid hex'); });
+
+    uploadFile.addEventListener('change', async (e)=>{
+      const file = e.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = async ()=>{
+        const dataUrl = reader.result;
+        const obj = {type:'upload', name:file.name, value:dataUrl};
+        localStorage.setItem(BG_KEY, JSON.stringify(obj));
+        bgPreview.style.backgroundImage = `url(${dataUrl})`;
+        bgPreview.style.backgroundSize = 'cover';
+        bgPreview.style.backgroundPosition = 'center';
+        updateSavedBgText();
+        // send to server (note: large payloads possible)
+        await sendBackgroundToServer({type:'upload', value:dataUrl});
+      };
+      reader.readAsDataURL(file);
+    });
+
+    useUrlBtn.addEventListener('click', async ()=>{
+      const url = urlInput.value.trim();
+      if(!url) return alert('Enter a valid link');
+      if(!/^https?:\/\//i.test(url)) return alert('URL must start with http:// or https://');
+      const obj = {type:'url', value:url};
+      localStorage.setItem(BG_KEY, JSON.stringify(obj));
+      bgPreview.style.backgroundImage = `url(${url})`;
+      bgPreview.style.backgroundSize = 'cover';
+      bgPreview.style.backgroundPosition = 'center';
+      updateSavedBgText();
+      await sendBackgroundToServer(obj);
+    });
+
+    const initDensity = localStorage.getItem(DENSITY_KEY) || 'comfortable';
+    function applyDensity(d){ if(d === 'compact') body.classList.add('compact'); else body.classList.remove('compact'); document.getElementById('densitySelect').value = d; }
+    applyDensity(initDensity);
+    document.getElementById('densitySelect').addEventListener('change',(e)=>{ localStorage.setItem(DENSITY_KEY,e.target.value); applyDensity(e.target.value); });
+
+    const initAnim = localStorage.getItem(ANIM_KEY);
+    const animationsToggleEl = document.getElementById('animationsToggle');
+    animationsToggleEl.checked = initAnim === null ? true : initAnim === 'true';
+    function applyAnimations(enabled){ if(!enabled) body.classList.add('no-animations'); else body.classList.remove('no-animations'); }
+    applyAnimations(animationsToggleEl.checked);
+    animationsToggleEl.addEventListener('change',(e)=>{ localStorage.setItem(ANIM_KEY,e.target.checked); applyAnimations(e.target.checked); });
+
+    const savedAccent = localStorage.getItem(ACCENT_KEY);
+    if(savedAccent) document.documentElement.style.setProperty('--accent', savedAccent);
+    accentPicker.addEventListener('input',(e)=>{ document.documentElement.style.setProperty('--accent', e.target.value); localStorage.setItem(ACCENT_KEY,e.target.value); });
+
+    changePassCard.addEventListener('click', ()=>{ modalOverlay.classList.add('show'); changeModal.classList.add('show'); });
+    modalCancel.addEventListener('click', ()=>{ modalOverlay.classList.remove('show'); changeModal.classList.remove('show'); });
+    modalOverlay.addEventListener('click', (e)=>{ if(e.target === modalOverlay){ modalOverlay.classList.remove('show'); changeModal.classList.remove('show'); } });
+
+    // Updated: send change password request to server and handle responses
+    modalSave.addEventListener('click', async ()=>{
+      const cur = document.getElementById('modalCurrent').value;
+      const nw = document.getElementById('modalNew').value;
+      const cf = document.getElementById('modalConfirm').value;
+      if(!cur || !nw || !cf) return alert('Fill all fields');
+      if(nw.length < 8) return alert('New password must be at least 8 characters');
+      if(nw !== cf) return alert('Passwords do not match');
+
+      try {
+        const res = await fetch('/api/settings/change-password', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ current: cur, newPassword: nw, confirm: cf })
+        });
+
+        const data = await res.json().catch(()=>({ error: 'Invalid server response' }));
+
+        if(!res.ok) {
+          // server returns error messages for different checks
+          alert(data.error || 'Failed to change password');
+          return;
+        }
+
+        // success -> refresh page to reflect changes (server requested)
+        alert('Password changed successfully');
+        // clear modal fields
+        document.getElementById('modalCurrent').value = '';
+        document.getElementById('modalNew').value = '';
+        document.getElementById('modalConfirm').value = '';
+        modalOverlay.classList.remove('show'); changeModal.classList.remove('show');
+        // refresh to pick up any server-side changes
+        window.location.reload();
+      } catch (err) {
+        console.error(err);
+        alert('Network error while changing password');
+      }
+    });
+
+    window.getSettings = function(){ return { theme: localStorage.getItem(THEME_KEY) || 'white', background: JSON.parse(localStorage.getItem(BG_KEY) || 'null'), density: localStorage.getItem(DENSITY_KEY) || 'comfortable', animations: localStorage.getItem(ANIM_KEY) === 'true', accent: localStorage.getItem(ACCENT_KEY) || getComputedStyle(document.documentElement).getPropertyValue('--accent') } }
+  </script>
+</body>
+</html>

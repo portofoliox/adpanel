@@ -1,80 +1,116 @@
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>ADPanel</title>>
-        <link id="favicon" rel="icon" type="image/png" href="/images/adpanel-dark.png">
-        <link rel="preconnect" href="https://fonts.googleapis.com">
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.7.2/css/all.css">
-        <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
-        <link href="https://fonts.googleapis.com/css2?family=Bitcount:wght@100..900&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="/dashboard.css">
-      </head>
-      <body>
-        <h1 class="title"><a href="/" style="text-decoration: none; color: white;">ADPanel</a></h1>
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>ADPanel</title>
+    <link id="favicon" rel="icon" type="image/png" href="/images/adpanel-dark.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.7.2/css/all.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bitcount:wght@100..900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/dashboard.css">
+    <style>
+      #splash-screen {
+        position: fixed;
+        top: 0; left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: url('https://files.catbox.moe/6yav8u.png') center/contain no-repeat;
+        background-color: #111;
+        background-size: cover;
+        z-index: 9999;
+        opacity: 1;
+        transition: opacity 1s ease;
+      }
+      #splash-screen.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
 
-        <form class="upload-form" action="/upload" method="POST" enctype="multipart/form-data">
-          <input type="file" name="file" accept=".zip" required>
-          <button class="upload">Upload ZIP</button>
-        </form>
+      /* small style tweak so settings button doesn't overlay weirdly */
+      .server-box { position: relative; }
+      .settings {
+        position: absolute;
+        right: 12px;
+        top: 12px;
+        background: rgba(0,0,0,0.45);
+        border: none;
+        padding: 8px;
+        border-radius: 8px;
+        color: #fff;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="splash-screen"></div>
 
+    <h1 class="title"><a href="/" style="text-decoration: none; color: white;">ADPanel</a></h1>
 
+    <form class="upload-form" action="/upload" method="POST" enctype="multipart/form-data">
+      <input type="file" name="file" accept=".zip" required>
+      <button class="upload">Upload ZIP</button>
+    </form>
 
-        <div class="list">
-          <% bots.forEach(bot => { %>
-            <div class="server-box" onclick="location.href='/bot/<%= bot %>'">
-              <div class="server-header">
-                <span class="server-icon">⚙️</span>
-                <span class="server-name"><%= bot %></span>
-              </div>
-            </div>
-            <div class="pet"></div>
-            <button class="settings" onclick="location.href='/settings'">
-            <i class="fa-solid fa-gear"></i>
-        </button>
-            <div>
-              <a class="start">Let's get started</a>
-            </div>
-            <div>
-              <a class="start-description">Create your server</a>
-            </div>
-          <% }) %>
+    <div class="list">
+      <% bots.forEach(function(bot){ %>
+        <div class="server-box" onclick="location.href='/bot/<%= bot %>'">
+          <div class="server-header">
+            <span class="server-icon" style="color: #b9bbbb;"><i class="fa-solid fa-server"></i></span>
+            <span class="server-name"><%= bot %></span>
+          </div>
+
+          <!-- settings button (only shown when user is admin) -->
         </div>
 
-      </body>
+        <div class="pet"></div>
+        <div>
+          <a class="start">Let's get started</a>
+        </div>
+        <div>
+          <a class="start-description">Create your server</a>
+        </div>
+      <% }) %>
+    </div>
+    <div>
+              <% if (isAdmin) { %>
+<button class="settings" title="Settings" onclick="event.stopPropagation(); location.href='/settings'" style="background: none; border: none; padding: 0; cursor: pointer; background-color: #252733;">
+  <i class="fa-solid fa-square-sliders"></i>
+</button>
+          <% } %>
+    </div>
 
-
-
-
-
-  <script>
+    <script>
       const darkFavicon = '/images/adpanel-white.png';
       const lightFavicon = '/images/adpanel-dark.png';
-
-      const darkApple = '/images/adpanel-white.png';
-      const lightApple = '/images/adpanel-dark.png';
       function updateIcons() {
-      const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach(el => el.remove());
+        const linkFavicon = document.createElement('link');
+        linkFavicon.rel = 'icon';
+        linkFavicon.type = 'image/png';
+        linkFavicon.href = isDark ? darkFavicon : lightFavicon;
+        document.head.appendChild(linkFavicon);
+      }
+      updateIcons();
+      window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateIcons);
 
-      document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach(el => el.remove());
+      window.addEventListener('DOMContentLoaded', () => {
+        const splash = document.getElementById('splash-screen');
+        if (!localStorage.getItem('seenSplash')) {
+          const displayTime = 3000;
+          setTimeout(() => {
+            splash.classList.add('hidden');
+            setTimeout(() => splash.remove(), 1000);
+          }, displayTime);
+          localStorage.setItem('seenSplash', 'true');
+        } else {
+          splash.remove();
+        }
+      });
+    </script>
 
-      const linkFavicon = document.createElement('link');
-      linkFavicon.rel = 'icon';
-      linkFavicon.type = 'image/png';
-      linkFavicon.href = isDark ? darkFavicon : lightFavicon;
-      document.head.appendChild(linkFavicon);
-
-      const linkApple = document.createElement('link');
-      linkApple.rel = 'apple-touch-icon';
-      linkApple.type = 'image/png';
-      linkApple.href = isDark ? darkApple : lightApple;
-      document.head.appendChild(linkApple);
-    }
-
-    updateIcons();
-
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateIcons);
-</script>
-      </html>
+  </body>
+</html>

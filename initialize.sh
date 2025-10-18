@@ -204,14 +204,27 @@ create_user() {
     console.log(hash);
   ")
 
-  # Save in the same user.json file (overwrite or replace previous)
-  cat <<EOF > "$USER_FILE"
-{
-  "email": "$EMAIL",
-  "password": "$HASH",
-  "secret": "$SECRET"
-}
-EOF
+  node -e "
+    const fs = require('fs');
+    const path = '$USER_FILE';
+    const email = '$EMAIL';
+    const password = '$HASH';
+    const secret = '$SECRET';
+    const isAdmin = String('$ISADMIN').toLowerCase().startsWith('y');
+    let data = [];
+    if (fs.existsSync(path)) {
+      try {
+        const content = fs.readFileSync(path,'utf8');
+        const parsed = JSON.parse(content);
+        if (Array.isArray(parsed)) data = parsed;
+        else if (typeof parsed === 'object' && parsed !== null) data = [parsed];
+      } catch(e) {
+        data = [];
+      }
+    }
+    data.push({ email, password, secret, admin: isAdmin });
+    fs.writeFileSync(path, JSON.stringify(data, null, 2));
+  "
 
   echo -e "${GREEN}User created successfully! Take your journey!${NC}"
 }

@@ -1,19 +1,31 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 body {
   font-family: sans-serif;
-  background: #2d3440;
+  background: url("https://cdn.pixabay.com/photo/2024/07/19/08/16/waves-8905720_1280.png") center/cover no-repeat;
   color: #abb2bf;
   padding: 20px;
 }
 
+html, body { 
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
 h1.title {
-  position: relative;
+  position: fixed;
   z-index: 20;
   font-family: 'Inter' sans-serif;
   margin-left: 20px;
   color: white;
   margin-bottom: 50px;
   font-size: 20px;
-  top: -40px;
+  top: 1rem;
 }
 
 .start {
@@ -83,8 +95,8 @@ h1.title {
   flex-wrap: wrap;
   gap: 20px 20px;
   justify-content: center;
-  margin-top: 200px;
-  margin-left: 100px;
+  margin-top: 250px;
+  margin-left: 80px;
 }
 
 .server-box {
@@ -122,18 +134,26 @@ h1.title {
   cursor: pointer;
   padding: 0 1rem;
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   align-items: center;
 }
 
 .settings i {
-  position: absolute;
+  position: fixed;
   font-size: 30px;
   color: #87CEEC;
   display: block;
-  right: 17px;
-  top: 15px;
-  transition: all 0.2s ease;
+  left: 96.5%;
+  top: 16px;
+  z-index: 100;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.settings:focus {
+  outline: none;
 }
 
 .settings:hover i {
