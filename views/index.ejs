@@ -100,7 +100,7 @@
       window.addEventListener('DOMContentLoaded', () => {
         const splash = document.getElementById('splash-screen');
         if (!localStorage.getItem('seenSplash')) {
-          const displayTime = 3000;
+          const displayTime = 5000;
           setTimeout(() => {
             splash.classList.add('hidden');
             setTimeout(() => splash.remove(), 1000);
