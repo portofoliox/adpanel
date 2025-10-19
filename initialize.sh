@@ -146,11 +146,14 @@ initialize_panel() {
   ")
 
   cat <<EOF > "$USER_FILE"
-{
-  "email": "$EMAIL",
-  "password": "$HASH",
-  "secret": "$SECRET"
-}
+[
+  {
+    "email": "$EMAIL",
+    "password": "$HASH",
+    "secret": "$SECRET",
+    "admin": true
+  }
+]
 EOF
 
   echo -e "${GREEN}Admin account created and saved in user.json${NC}"
