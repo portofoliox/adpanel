@@ -1,9 +1,12 @@
-const express = require(class="str">"express");
+const express = require("express");
 const app = express();
-app.get(class="str">"/", (req, res) => {
-  res.send(class="str">"Hello World from ADPanel!");
+
+app.get("/", (req, res) => {
+  res.send("Hello World from ADPanel!");
 });
-const PORT = class="num">8080;
+
+const PORT = 8080;
+
 app.listen(PORT, () => {
-  console.log(class="str">`Server running on http:<span class="com">//localhost:${PORT}`);
+  console.log(`Server running on http://localhost:${PORT}`);
 });

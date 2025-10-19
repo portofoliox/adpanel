@@ -7,11 +7,11 @@
 
 ---
 
-# ⚙️ How to install?
+# ⚙️ How to install and run?
 **Just run this in your terminal:**
 
 ```bash
-git clone https://github.com/portofoliox/adpanel.git && cd adpanel && chmod +x initialize.sh && bash initialize.sh && chmod +x start.sh && bash start.sh
+git clone https://github.com/portofoliox/adpanel.git && cd adpanel && chmod +x rate-limiting.sh && chmod +x initialize.sh && bash initialize.sh && chmod +x start.sh && bash start.sh 
 ```
 
 # How to change password for Admin user or something else?
@@ -22,3 +22,9 @@ bash initialize.sh
 ```
 
  **Or you can access Panel Settings from the dashboard and click on Account category**
+
+ # How to set a default user limited servers access?
+ **You can do this in account settings.**
+
+# Does this Discord Panel have protection against DDoS attacks?
+**Absolutely, it has rate limiting enabled by default, set to 10 requests per minute. You can change the limit by running ./rate-limiting.sh and choosing option 3.**
