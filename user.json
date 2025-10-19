@@ -1,6 +1,14 @@
+[
   {
-    "email": "dxryus99@gmail.com",
-    "password": "$2b$10$TXe18NYhiC3fVlx.rN4OWetTd6LQbcm/0ukf5XVbXePadmFgU4Q.m",
-    "secret": "KRHDCKDZKIYFIY3EGQWF2YTRMRLVGPCK",
+    "email": "admin@gmail.com",
+    "password": "$2b$10$QhNUToiy/uZywsHKltOXSOj71rpN6uGFhjAYOP2XscSXbyH7PZjyu",
+    "secret": "LV2HU2J6EERUOZS6FY2VIYL3LNEHA4CP",
     "admin": true
   },
+  {
+    "email": "test@test.test",
+    "password": "$2b$10$.37TL4JsL49oDAySlsbvnODUogmyZZXLbY62bQUlKbZWcJubykHR6",
+    "secret": "JF5HQZCUKBYG4QCWPB3TCQSMOARVIUSS",
+    "admin": false
+  }
+]

@@ -118,7 +118,7 @@ initialize_panel() {
   echo ""
 
   echo -e "${CYAN}Installing dependencies...${NC}"
-  npm install adm-zip express-session speakeasy qrcode bcrypt express-rate-limit qrcode-terminal
+  npm install adm-zip express-session speakeasy qrcode bcrypt express-rate-limit qrcode-terminal tar
 
   SECRET=$(node -e "
     const speakeasy = require('speakeasy');

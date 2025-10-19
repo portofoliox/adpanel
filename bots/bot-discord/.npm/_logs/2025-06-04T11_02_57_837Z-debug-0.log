@@ -1,0 +1,134 @@
+0 verbose cli /usr/local/bin/node /usr/local/bin/npm
+1 info using npm@11.4.1
+2 info using node@v20.19.2
+3 silly config load:file:/usr/local/lib/node_modules/npm/npmrc
+4 silly config load:file:/home/container/.npmrc
+5 silly config load:file:/usr/local/etc/npmrc
+6 verbose title npm install
+7 verbose argv "install"
+8 verbose logfile logs-max:10 dir:/home/container/.npm/_logs/2025-06-04T11_02_57_837Z-
+9 verbose logfile /home/container/.npm/_logs/2025-06-04T11_02_57_837Z-debug-0.log
+10 silly logfile start cleaning logs, removing 1 files
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:2114191360 maxSize:528547840 maxEntrySize:264273920
+13 silly idealTree buildDeps
+14 silly reify moves {}
+15 silly audit bulk request {
+15 silly audit   '@discordjs/builders': [ '1.9.0' ],
+15 silly audit   '@discordjs/collection': [ '1.5.3', '2.1.1' ],
+15 silly audit   '@discordjs/formatters': [ '0.5.0' ],
+15 silly audit   '@discordjs/rest': [ '2.4.0' ],
+15 silly audit   '@discordjs/util': [ '1.1.1' ],
+15 silly audit   '@discordjs/ws': [ '1.1.1' ],
+15 silly audit   'discord-api-types': [ '0.37.83', '0.37.97' ],
+15 silly audit   '@sapphire/async-queue': [ '1.5.3' ],
+15 silly audit   '@sapphire/shapeshift': [ '4.0.0' ],
+15 silly audit   '@sapphire/snowflake': [ '3.5.3' ],
+15 silly audit   '@types/node': [ '22.5.4' ],
+15 silly audit   '@types/ws': [ '8.5.12' ],
+15 silly audit   '@vladfrangu/async_event_emitter': [ '2.4.6' ],
+15 silly audit   'discord.js': [ '14.16.1' ],
+15 silly audit   'fast-deep-equal': [ '3.1.3' ],
+15 silly audit   lodash: [ '4.17.21' ],
+15 silly audit   'lodash.snakecase': [ '4.1.1' ],
+15 silly audit   'magic-bytes.js': [ '1.10.0' ],
+15 silly audit   'ts-mixer': [ '6.0.4' ],
+15 silly audit   tslib: [ '2.7.0' ],
+15 silly audit   undici: [ '6.19.8' ],
+15 silly audit   'undici-types': [ '6.19.8' ],
+15 silly audit   ws: [ '8.18.0' ]
+15 silly audit }
+16 http cache ws@https://registry.npmjs.org/ws/-/ws-8.18.0.tgz 1ms (cache hit)
+17 http cache undici-types@https://registry.npmjs.org/undici-types/-/undici-types-6.19.8.tgz 0ms (cache hit)
+18 http cache undici@https://registry.npmjs.org/undici/-/undici-6.19.8.tgz 0ms (cache hit)
+19 http cache tslib@https://registry.npmjs.org/tslib/-/tslib-2.7.0.tgz 0ms (cache hit)
+20 http cache ts-mixer@https://registry.npmjs.org/ts-mixer/-/ts-mixer-6.0.4.tgz 0ms (cache hit)
+21 http cache magic-bytes.js@https://registry.npmjs.org/magic-bytes.js/-/magic-bytes.js-1.10.0.tgz 0ms (cache hit)
+22 http cache lodash.snakecase@https://registry.npmjs.org/lodash.snakecase/-/lodash.snakecase-4.1.1.tgz 0ms (cache hit)
+23 http cache lodash@https://registry.npmjs.org/lodash/-/lodash-4.17.21.tgz 0ms (cache hit)
+24 http cache fast-deep-equal@https://registry.npmjs.org/fast-deep-equal/-/fast-deep-equal-3.1.3.tgz 0ms (cache hit)
+25 http cache discord.js@https://registry.npmjs.org/discord.js/-/discord.js-14.16.1.tgz 0ms (cache hit)
+26 http cache discord-api-types@https://registry.npmjs.org/discord-api-types/-/discord-api-types-0.37.97.tgz 0ms (cache hit)
+27 http cache @vladfrangu/async_event_emitter@https://registry.npmjs.org/@vladfrangu/async_event_emitter/-/async_event_emitter-2.4.6.tgz 0ms (cache hit)
+28 http cache @types/ws@https://registry.npmjs.org/@types/ws/-/ws-8.5.12.tgz 0ms (cache hit)
+29 http cache @types/node@https://registry.npmjs.org/@types/node/-/node-22.5.4.tgz 0ms (cache hit)
+30 http cache @sapphire/snowflake@https://registry.npmjs.org/@sapphire/snowflake/-/snowflake-3.5.3.tgz 0ms (cache hit)
+31 http cache @sapphire/shapeshift@https://registry.npmjs.org/@sapphire/shapeshift/-/shapeshift-4.0.0.tgz 0ms (cache hit)
+32 http cache @sapphire/async-queue@https://registry.npmjs.org/@sapphire/async-queue/-/async-queue-1.5.3.tgz 0ms (cache hit)
+33 http cache @discordjs/ws@https://registry.npmjs.org/@discordjs/ws/-/ws-1.1.1.tgz 0ms (cache hit)
+34 http cache @discordjs/util@https://registry.npmjs.org/@discordjs/util/-/util-1.1.1.tgz 0ms (cache hit)
+35 http cache @discordjs/rest@https://registry.npmjs.org/@discordjs/rest/-/rest-2.4.0.tgz 0ms (cache hit)
+36 http cache @discordjs/formatters@https://registry.npmjs.org/@discordjs/formatters/-/formatters-0.5.0.tgz 0ms (cache hit)
+37 http cache @discordjs/collection@https://registry.npmjs.org/@discordjs/collection/-/collection-1.5.3.tgz 0ms (cache hit)
+38 http cache @discordjs/builders@https://registry.npmjs.org/@discordjs/builders/-/builders-1.9.0.tgz 0ms (cache hit)
+39 http cache discord-api-types@https://registry.npmjs.org/discord-api-types/-/discord-api-types-0.37.83.tgz 0ms (cache hit)
+40 http cache @discordjs/collection@https://registry.npmjs.org/@discordjs/collection/-/collection-2.1.1.tgz 0ms (cache hit)
+41 http cache @discordjs/collection@https://registry.npmjs.org/@discordjs/collection/-/collection-2.1.1.tgz 0ms (cache hit)
+42 http fetch GET 200 https://registry.npmjs.org/npm 458ms
+43 http fetch POST 200 https://registry.npmjs.org/-/npm/v1/security/advisories/bulk 402ms
+44 silly audit report {
+44 silly audit report   undici: [
+44 silly audit report     {
+44 silly audit report       id: 1101609,
+44 silly audit report       url: 'https://github.com/advisories/GHSA-c76h-2ccp-4975',
+44 silly audit report       title: 'Use of Insufficiently Random Values in undici',
+44 silly audit report       severity: 'moderate',
+44 silly audit report       vulnerable_versions: '>=6.0.0 <6.21.1',
+44 silly audit report       cwe: [Array],
+44 silly audit report       cvss: [Object]
+44 silly audit report     },
+44 silly audit report     {
+44 silly audit report       id: 1104500,
+44 silly audit report       url: 'https://github.com/advisories/GHSA-cxrh-j4jr-qwg3',
+44 silly audit report       title: 'undici Denial of Service attack via bad certificate data',
+44 silly audit report       severity: 'low',
+44 silly audit report       vulnerable_versions: '>=6.0.0 <6.21.2',
+44 silly audit report       cwe: [Array],
+44 silly audit report       cvss: [Object]
+44 silly audit report     }
+44 silly audit report   ]
+44 silly audit report }
+45 silly packumentCache corgi:https://registry.npmjs.org/undici cache-miss
+46 http fetch GET 200 https://registry.npmjs.org/undici 176ms (cache updated)
+47 silly packumentCache corgi:https://registry.npmjs.org/undici set size:undefined disposed:false
+48 silly packumentCache corgi:https://registry.npmjs.org/@discordjs%2frest cache-miss
+49 silly packumentCache corgi:https://registry.npmjs.org/discord.js cache-miss
+50 http fetch GET 200 https://registry.npmjs.org/@discordjs%2frest 415ms (cache updated)
+51 silly packumentCache corgi:https://registry.npmjs.org/@discordjs%2frest set size:undefined disposed:false
+52 http fetch GET 200 https://registry.npmjs.org/discord.js 675ms (cache updated)
+53 silly packumentCache corgi:https://registry.npmjs.org/discord.js set size:undefined disposed:false
+54 silly packumentCache corgi:https://registry.npmjs.org/@discordjs%2fws cache-miss
+55 http fetch GET 200 https://registry.npmjs.org/@discordjs%2fws 440ms (cache updated)
+56 silly packumentCache corgi:https://registry.npmjs.org/@discordjs%2fws set size:undefined disposed:false
+57 silly ADD node_modules/ws
+58 silly ADD node_modules/undici-types
+59 silly ADD node_modules/undici
+60 silly ADD node_modules/tslib
+61 silly ADD node_modules/ts-mixer
+62 silly ADD node_modules/magic-bytes.js
+63 silly ADD node_modules/lodash.snakecase
+64 silly ADD node_modules/lodash
+65 silly ADD node_modules/fast-deep-equal
+66 silly ADD node_modules/discord.js
+67 silly ADD node_modules/discord-api-types
+68 silly ADD node_modules/@vladfrangu/async_event_emitter
+69 silly ADD node_modules/@types/ws
+70 silly ADD node_modules/@types/node
+71 silly ADD node_modules/@sapphire/snowflake
+72 silly ADD node_modules/@sapphire/shapeshift
+73 silly ADD node_modules/@sapphire/async-queue
+74 silly ADD node_modules/@discordjs/ws
+75 silly ADD node_modules/@discordjs/ws/node_modules/discord-api-types
+76 silly ADD node_modules/@discordjs/ws/node_modules/@discordjs/collection
+77 silly ADD node_modules/@discordjs/util
+78 silly ADD node_modules/@discordjs/rest
+79 silly ADD node_modules/@discordjs/rest/node_modules/@discordjs/collection
+80 silly ADD node_modules/@discordjs/formatters
+81 silly ADD node_modules/@discordjs/collection
+82 silly ADD node_modules/@discordjs/builders
+83 verbose cwd /home/container
+84 verbose os Linux 5.4.0-29-generic
+85 verbose node v20.19.2
+86 verbose npm  v11.4.1
+87 verbose exit 0
+88 info ok

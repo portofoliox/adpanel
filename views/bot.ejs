@@ -3,358 +3,1069 @@
   <head>
     <meta charset="UTF-8" />
     <title>ADPanel - <%= bot %></title>
-    <link
-      id="favicon"
-      rel="icon"
-      type="image/png"
-      href="/images/adpanel-dark.png"
-    />
-    <link rel="stylesheet" href="/style.css" />
+
+    <link rel="stylesheet" href="/style.css">
+
+    <link id="favicon" rel="icon" type="image/png" href="/images/adpanel-dark.png" />
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <script src="/socket.io/socket.io.js"></script>
+
+    <style>
+      /* ---------- Custom UI (menus, wheel, drop overlay) ---------- */
+      .entry-actions { position: relative; }
+      .more-btn {
+        background: transparent;
+        border: none;
+        color: #bfc8d4;
+        cursor: pointer;
+        font-size: 18px;
+        padding: 6px;
+        border-radius: 6px;
+      }
+      .more-btn:hover { background: rgba(255,255,255,0.02); color:#fff; }
+
+      .more-menu {
+        position: absolute;
+        right: 0;
+        top: 28px;
+        background: #0f1114;
+        border: 1px solid rgba(255,255,255,0.04);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+        border-radius: 8px;
+        overflow: hidden;
+        z-index: 2000;
+        min-width: 160px;
+        display: none;
+      }
+      .more-menu.show { display: block; }
+      .more-menu button {
+        display: block;
+        width: 100%;
+        padding: 10px 12px;
+        background: transparent;
+        border: 0;
+        color: #c8d1da;
+        text-align: left;
+        font-size: 14px;
+        cursor: pointer;
+      }
+      .more-menu button:hover { background: rgba(255,255,255,0.02); color:#fff; }
+
+      /* Progress wheel styles (small circular "rotita") */
+      .progress-wheel {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #31343a;
+        display: inline-block;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.06);
+        box-shadow: 0 1px 0 rgba(0,0,0,0.3) inset;
+        margin-left: 10px;
+        vertical-align: middle;
+        cursor: pointer;
+        transition: transform .12s ease, box-shadow .12s ease;
+      }
+      .progress-wheel:hover { transform: scale(1.08); box-shadow: 0 4px 14px rgba(0,0,0,0.5); }
+      .progress-wheel .fill {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: 0;
+        background: #ffffff;
+        height: 0%;
+        border-radius: 50%;
+        transition: height 120ms linear;
+        pointer-events: none;
+      }
+      .progress-wheel.hidden { display: none; }
+
+      /* Modern popup */
+      .progress-popup {
+        position: fixed;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        background: linear-gradient(135deg, rgba(18,20,24,0.92), rgba(28,30,36,0.88));
+        color: #fff;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.06);
+        padding: 16px 18px;
+        z-index: 100000;
+        min-width: 300px;
+        box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+        display: none;
+        backdrop-filter: blur(6px) saturate(120%);
+      }
+      .progress-popup .row { display:flex;align-items:center;justify-content:space-between;gap:12px; }
+      .progress-popup .percent { font-weight:700; font-size:20px; color:#ffffff; }
+      .progress-popup .close-btn { background:transparent;border: none;color:#9aa3ad;font-size:18px;cursor:pointer;padding:6px;border-radius:6px; }
+      .progress-popup .progress-bar { margin-top:12px;width:100%;height:12px;background: rgba(255,255,255,0.06);border-radius:8px;overflow:hidden;position: relative; }
+      .progress-popup .progress-bar .bar { height:100%; width:0%; background: linear-gradient(90deg, rgba(255,255,255,1), rgba(220,220,220,0.85)); transition: width 120ms linear; box-shadow: 0 2px 8px rgba(0,0,0,0.45) inset; }
+      .progress-popup .meta { margin-top:10px;font-size:12px;color:#9aa3ad;display:flex;align-items:center;justify-content:space-between;gap:8px; }
+
+      /* drop overlay inside files modal */
+      #dropOverlay { position: absolute; inset: 0; display: none; align-items: center; justify-content: center; z-index: 99990; pointer-events: none; }
+      #dropOverlay.visible { display: flex; pointer-events: auto; }
+      #dropOverlay .inner { background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.08); padding: 26px 32px; border-radius: 12px; text-align: center; color: #e6eef8; backdrop-filter: blur(3px); box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
+      #dropOverlay .inner h3 { margin: 0 0 6px 0; font-size: 18px; }
+      #dropOverlay .inner p { margin: 0; font-size: 13px; color: #b8c3cf; }
+
+      /* ---------- Modern rounded dark scrollbar styles ---------- */
+      /* Apply to everything by default (webkit browsers) */
+      *::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+
+      /* Track is transparent so it looks like a slim rounded line on top of background */
+      *::-webkit-scrollbar-track {
+        background: transparent;
+        margin: 6px 0;
+        border-radius: 999px;
+      }
+
+      /* Thumb: dark grey rounded line */
+      *::-webkit-scrollbar-thumb {
+        background-color: #212121; /* requested dark grey */
+        border-radius: 999px; /* fully rounded ends */
+        border: 2px solid transparent; /* gives padding look */
+        background-clip: padding-box;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+      }
+
+      *::-webkit-scrollbar-thumb:hover {
+        background-color: #2a2a2a;
+      }
+
+      /* For horizontal small scrollbar hover feel */
+      *::-webkit-scrollbar-corner {
+        background: transparent;
+      }
+
+      /* FireFox: use scrollbar-color & width on the main scrollable elements */
+      /* Make it thin and dark */
+      #console, #entries, .modal-body, .modal-left, .modal-right, .code-area, textarea, .modal {
+        scrollbar-width: thin;
+        scrollbar-color: #212121 transparent;
+      }
+
+      /* For specific containers ensure they can scroll and get the modern look */
+      #console {
+        max-height: 320px;
+        overflow: auto;
+        padding: 12px;
+        border-radius: 8px;
+        background: #0b0c0e;
+      }
+
+      #entries {
+        max-height: 420px;
+        overflow: auto;
+        padding-right: 8px;
+      }
+
+      .modal-body {
+        max-height: 520px;
+        overflow: auto;
+      }
+
+      .modal-left, .modal-right {
+        max-height: 520px;
+        overflow: auto;
+      }
+
+      .code-area {
+        max-height: 520px;
+        overflow: auto;
+        padding: 8px;
+      }
+
+      textarea {
+        max-height: 520px;
+        overflow: auto;
+      }
+
+      /* small layout tweak so scrollbars don't overlap content on list items */
+      .entry { display:flex; justify-content:space-between; gap:12px; padding:8px 6px; align-items:center; border-radius:6px; }
+      .entry:hover { background: rgba(255,255,255,0.02); }
+
+      /* Dock styles hint (if your external CSS doesn't include them) */
+      .dock-wrap { position: fixed; right: 18px; bottom: 18px; z-index: 99999; }
+      .dock { display: flex; gap: 10px; background: rgba(11,12,14,0.6); padding: 8px; border-radius: 14px; box-shadow: 0 6px 20px rgba(0,0,0,0.6); align-items: center; }
+      .dock-item { display:flex; flex-direction:column; align-items:center; gap:6px; padding:8px; cursor:pointer; user-select:none; color:#d1d8de; text-decoration:none; }
+      .dock-item .icon { width:36px; height:36px; display:flex; align-items:center; justify-content:center; border-radius:8px; }
+      .dock-item .label { font-size:11px; color:#c3cad2; margin-top:4px; }
+      .dock-item:hover { transform: translateY(-3px); transition: transform .12s; }
+    </style>
 
     <script>
       const darkFavicon = "/images/adpanel-white.png";
       const lightFavicon = "/images/adpanel-dark.png";
-
-      const darkApple = "/images/adpanel-white.png";
-      const lightApple = "/images/adpanel-dark.png";
       function updateIcons() {
-        const isDark = window.matchMedia(
-          "(prefers-color-scheme: dark)"
-        ).matches;
-
-        document
-          .querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]')
-          .forEach((el) => el.remove());
-
+        const isDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach(el => el.remove());
         const linkFavicon = document.createElement("link");
         linkFavicon.rel = "icon";
         linkFavicon.type = "image/png";
         linkFavicon.href = isDark ? darkFavicon : lightFavicon;
         document.head.appendChild(linkFavicon);
-
-        const linkApple = document.createElement("link");
-        linkApple.rel = "apple-touch-icon";
-        linkApple.type = "image/png";
-        linkApple.href = isDark ? darkApple : lightApple;
-        document.head.appendChild(linkApple);
       }
-
       updateIcons();
-
-      window
-        .matchMedia("(prefers-color-scheme: dark)")
-        .addEventListener("change", updateIcons);
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", updateIcons);
     </script>
   </head>
+
   <body>
-    <div class="console">
-      <div class="controls">
-        <select id="scriptSelect"></select>
-        <button onclick="run()" class="run-button">
-          <i
-            class="fa-solid fa-play"
-            style="color: white; transform: rotate(90deg)"
-          ></i>
-        </button>
-        <button onclick="stop()" class="stop-button">
-          <i class="fa-solid fa-stop" style="color: white"></i>
-        </button>
+    <div class="app-wrap">
+      <div class="topbar">
+        <div class="brands">
+          <div class="logo" title="Settings"><a href="/"><img src="https://i.imgur.com/k5agjYf.png" alt="adpanel-logo" width="7%" height="7%"></a></div>
+          <div class="logo" title="Setups"><a href="/" style="position: absolute; font-family: sans-serif; font-size: 30px; font-weight: bold; margin-top: -35px; margin-left: 60px; text-decoration: none; color: white;">Panel</a></div>
+        </div>
+
+        <div class="top-actions">
+          <button class="icon-btn" id="filesBtn" onclick="openFilesModal()"><i class="fa-solid fa-folder-open"></i> Files</button>
+          <button class="icon-btn" id="taskBtn" onclick="openTaskModal()"><i class="fa-solid fa-list-check"></i> Task</button>
+          <button class="icon-btn" onclick="focusConsole()"><i class="fa-solid fa-terminal"></i> Terminal</button>
+          <button class="icon-btn" onclick="run()" title="Run selected"><i class="fa-solid fa-play"></i> Run</button>
+          <button class="icon-btn" onclick="stop()" title="Stop process"><i class="fa-solid fa-stop"></i> Stop</button>
+        </div>
       </div>
 
-      <div class="header"></div>
-      <div class="body-console"></div>
-      <div class="brow"></div>
-      <div class="spacc"></div>
-      <div class="close" title="Stop" onclick="stop()"></div>
-      <div class="minimize" title="Minimize" onclick="stop()"></div>
-      <div class="maximize" title="Start" onclick="run()"></div>
-      <pre id="console"></pre>
+      <div class="main-stage" style="margin-top:2px">
+        <div class="console-panel" role="main" aria-label="Console panel">
+          <div class="console-window">
+            <div class="window-header">
+              <div style="display:flex;align-items:center;gap:8px">
+                <span class="dot" style="background:#ff5f56; cursor: pointer;" onclick="stop()"></span>
+                <span class="dot" style="background:#ffbd2e; cursor: pointer;" onclick="stop()"></span>
+                <span class="dot" style="background:#27c93f; cursor: pointer;" onclick="run()"></span>
+                <div style="margin-left:6px;color:var(--muted);font-size:13px">Console — <span style="color:#fff;font-weight:700"><%= bot %></span></div>
+              </div>
+              <div class="window-controls">
+                <div style="color:var(--muted);font-size:13px">Status: <span id="statusLabel">idle</span></div>
+              </div>
+            </div>
 
-      <div style="margin-top: 20px">
-        <i
-          class="fa-solid fa-arrow-right-to-bracket"
-          style="
-            position: absolute;
-            z-index: 1000;
-            font-size: 15px;
-            color: gray;
-            margin-top: -17px;
-            margin-left: 20px;
-          "
-        ></i>
-        <input
-          type="text"
-          id="cmdInput"
-          placeholder="Type a command..."
-          style="
-            position: absolute;
-            width: 1320px;
-            height: 20px;
-            padding: 10px;
-            padding-left: 45px;
-            outline: none;
-            top: 545px;
-            left: -5px;
-            background-color: #303030;
-            border: none;
-            color: gray;
-          "
-        />
-        <div class="browbody"></div>
-        <div class="browcomponent"></div>
+            <div class="controls">
+              <select id="scriptSelect" title="Choose script"></select>
+              <button class="run-button" onclick="run()" title="Run"><i class="fa-solid fa-play" style="transform: rotate(90deg)"></i></button>
+              <button class="stop-button" onclick="stop()" title="Stop"><i class="fa-solid fa-stop"></i></button>
+              <div style="flex:1"></div>
+            </div>
+
+            <pre id="console" aria-live="polite"></pre>
+
+            <div class="cmd-row">
+              <input id="cmdInput" type="text" placeholder="Type a command and press Enter (will be sent to running process)" />
+              <button class="icon-btn" onclick="sendCommand()" title="Send command">Send</button>
+              <button class="icon-btn" onclick="clearConsole()" title="Clear">Clear</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <button
-      onclick="createNew()"
-      style="
-        position: absolute;
-        margin-top: 700px;
-        margin-left: 170px;
-        padding: 5px;
-        border-radius: 20px;
-        background-color: #61dafb;
-        border: none;
-        gap: 40px;
-        width: 150px;
-        white-space: nowrap;
-        cursor: pointer;
-        color: black;
-      "
-    >
-      <i class="fa-solid fa-file" style="margin-right: 5px"></i>
-      New File/Folder
-    </button>
+    <!-- Files modal -->
+    <div id="filesModal" class="modal-overlay" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="filesModalTitle" style="position:relative;">
+        <div class="modal-header">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div>
+              <div class="modal-title" id="filesModalTitle">File Manager — <span style="color:#fff;font-weight:700"><%= bot %></span></div>
+              <div style="color:var(--muted);font-size:13px">Explore and manage files</div>
+            </div>
+            <div id="progressWheel" class="progress-wheel hidden" title="Operation in progress">
+              <div class="fill" id="progressFill" style="height:0%"></div>
+            </div>
+          </div>
 
-    <div class="pet"></div>
-    <h1 class="navbar-text">
-      <a
-        href="/"
-        style="
-          text-decoration: none;
-          color: white;
-          font: 'Inter' sans-serif;
-          font-size: 20px;
-        "
-        >ADPanel</a
-      >
-    </h1>
+          <div>
+            <button class="modal-close" id="filesModalClose" title="Close (Esc)"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        </div>
 
-    <h2 id="file-manager">File Manager</h2>
-    <div id="breadcrumbs"></div>
-    <ul id="entries"></ul>
-    <input type="file" id="fileUpload" /><button onclick="upload()">
-      Upload File
-    </button>
+        <!-- drop overlay -->
+        <div id="dropOverlay" aria-hidden="true">
+          <div class="inner">
+            <h3 id="dropTitle">Drop files here to upload</h3>
+            <p id="dropSubtitle">Release to upload to current folder</p>
+            <div class="hint">Accepted: files & common archives (zip, tar.gz, rar, 7z)</div>
+          </div>
+        </div>
 
-    <div id="editor" style="display: none">
-      <h3 id="edit-path"></h3>
-      <textarea id="edit-content"></textarea><br />
-      <button onclick="save()">Save</button>
-      <button onclick="discard()">Discard</button>
+        <div class="modal-body">
+          <div class="modal-left">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <div id="breadcrumbs" style="color:var(--muted);font-size:13px"></div>
+              <div style="display:flex;gap:8px">
+                <label for="fileUploadModal" class="icon-btn" style="cursor:pointer"><i class="fa-solid fa-upload"></i> Upload</label>
+                <input id="fileUploadModal" type="file" />
+                <button class="icon-btn" onclick="createNew()" title="New file/folder"><i class="fa-solid fa-file-circle-plus"></i> New</button>
+              </div>
+            </div>
+
+            <ul id="entries" role="list"></ul>
+          </div>
+
+          <div class="modal-right">
+            <div style="color:var(--muted);font-size:13px;margin-bottom:8px">Here you can edit your application.</div>
+            <div style="color:var(--muted);font-size:12px">We have actions for all these kinds of things.</div>
+          </div>
+        </div>
+      </div>
     </div>
-    <div class="startup-file">Startup</div>
+
+    <!-- Task modal -->
+    <div id="taskModal" class="modal-overlay task-modal" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="taskModalTitle">
+        <div class="modal-header">
+          <div>
+            <div class="modal-title" id="taskModalTitle">Task Manager — Startup</div>
+            <div style="color:var(--muted);font-size:13px">Choose a startup file to use when you press Run</div>
+          </div>
+          <div>
+            <button class="modal-close" id="taskModalClose" title="Close (Esc)"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        </div>
+
+        <div style="padding:6px 0 12px 0">
+          <div style="display:flex;gap:8px;align-items:center">
+            <select id="taskStartupSelect" style="flex:1;padding:10px;border-radius:8px;background:#0e1116;border:1px solid rgba(255,255,255,0.02);color:#fff"></select>
+            <button class="icon-btn" id="saveStartupBtn">Save</button>
+          </div>
+          <div style="color:var(--muted);font-size:13px;margin-top:8px">Saved startup choice is persisted in browser (localStorage).</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Editor modal (big) -->
+    <div id="editorModal" class="modal-overlay editor-modal" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="editorModalTitle">
+        <div class="editor-header">
+          <div>
+            <div class="editor-title" id="editorModalTitle">Editor</div>
+            <div style="color:var(--muted);font-size:13px" id="editorPath"></div>
+          </div>
+          <div class="editor-actions">
+            <button class="modal-close" id="editorModalClose" title="Close (Esc)"><i class="fa-solid fa-xmark"></i></button>
+          </div>
+        </div>
+
+        <div id="bigEditor">
+          <div id="codeArea" class="code-area" contenteditable="true" spellcheck="false" style="display:none"></div>
+          <textarea id="textArea" style="display:none"></textarea>
+
+          <div style="display:flex;gap:8px;justify-content:flex-end">
+            <button class="icon-btn" id="editorDiscard">Discard</button>
+            <button class="icon-btn" id="editorSave">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dock / Taskbar (restored) -->
+    <div class="dock-wrap" role="navigation" aria-label="taskbar">
+      <div class="dock">
+        <div class="dock-item" onclick="window.location='/'" title="Dashboard">
+          <div class="icon"><i class="fa-solid fa-house" style="color: white;"></i></div>
+          <div class="label">Home</div>
+        </div>
+
+        <div class="sep" aria-hidden="true"></div>
+
+        <div class="dock-item" onclick="openFilesModal()" title="Files">
+          <div class="icon"><i class="fa-solid fa-folder-open" style="color: #60a5fa;"></i></div>
+          <div class="label">Files</div>
+        </div>
+        <div class="dock-item" onclick="openTaskModal()" title="Task Manager">
+          <div class="icon"><i class="fa-solid fa-list-check" style="color: #facc15;"></i></div>
+          <div class="label">Task</div>
+        </div>
+        <div class="dock-item" onclick="focusConsole()" title="Terminal">
+          <div class="icon"><i class="fa-solid fa-terminal" style="color: white;"></i></div>
+          <div class="label">Terminal</div>
+        </div>
+        <div class="dock-item" onclick="run()" title="Run">
+          <div class="icon"><i class="fa-solid fa-play" style="color: #10b981;"></i></div>
+          <div class="label">Run</div>
+        </div>
+        <div class="dock-item" onclick="stop()" title="Stop">
+          <div class="icon"><i class="fa-solid fa-stop" style="color: #f97316;"></i></div>
+          <div class="label">Stop</div>
+        </div>
+        <div class="dock-item" onclick="createNew()" title="Create new">
+          <div class="icon"><i class="fa-solid fa-file-circle-plus" style="color: #38bdf8;"></i></div>
+          <div class="label">New</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- modern progress popup (centered, english) -->
+    <div id="progressPopup" class="progress-popup" role="dialog" aria-hidden="true">
+      <div class="row">
+        <div>
+          <div class="title">Current Operation</div>
+          <div class="percent" id="popupPercent">0%</div>
+        </div>
+        <div>
+          <button id="popupClose" class="close-btn" title="Close">✕</button>
+        </div>
+      </div>
+      <div class="progress-bar" aria-hidden="true">
+        <div class="bar" id="popupBar" style="width:0%"></div>
+      </div>
+      <div class="meta">
+        <div id="popupMsg">Processing...</div>
+        <div id="popupTime" style="font-size:12px;color:#88929b">—</div>
+      </div>
+    </div>
 
     <script>
       const bot = "<%= bot %>";
       const socket = io();
 
+      // Elements
+      const consoleEl = document.getElementById("console");
+      const scriptSelect = document.getElementById("scriptSelect");
+      const cmdInput = document.getElementById("cmdInput");
+      const entriesEl = document.getElementById("entries");
+      const breadcrumbs = document.getElementById("breadcrumbs");
+      const filesModal = document.getElementById("filesModal");
+      const filesModalClose = document.getElementById("filesModalClose");
+      const fileUploadModal = document.getElementById("fileUploadModal");
+      const taskModal = document.getElementById("taskModal");
+      const taskModalClose = document.getElementById("taskModalClose");
+      const taskStartupSelect = document.getElementById("taskStartupSelect");
+      const saveStartupBtn = document.getElementById("saveStartupBtn");
+      const statusLabel = document.getElementById("statusLabel");
+
+      // Editor modal elements
+      const editorModal = document.getElementById("editorModal");
+      const editorModalClose = document.getElementById("editorModalClose");
+      const editorPath = document.getElementById("editorPath");
+      const codeArea = document.getElementById("codeArea");
+      const textArea = document.getElementById("textArea");
+      const editorSave = document.getElementById("editorSave");
+      const editorDiscard = document.getElementById("editorDiscard");
+
+      // progress wheel + popup elements
+      const progressWheel = document.getElementById("progressWheel");
+      const progressFill = document.getElementById("progressFill");
+      const progressPopup = document.getElementById("progressPopup");
+      const popupPercent = document.getElementById("popupPercent");
+      const popupBar = document.getElementById("popupBar");
+      const popupMsg = document.getElementById("popupMsg");
+      const popupTime = document.getElementById("popupTime");
+      const popupClose = document.getElementById("popupClose");
+
+      // drag & drop overlay elements
+      const dropOverlay = document.getElementById("dropOverlay");
+      const dropTitle = document.getElementById("dropTitle");
+      const dropSubtitle = document.getElementById("dropSubtitle");
+
       socket.emit("join", bot);
 
       socket.on("output", (data) => {
-        document.getElementById("console").textContent += data;
+        consoleEl.textContent += data;
+        consoleEl.scrollTop = consoleEl.scrollHeight;
       });
 
       socket.on("fileData", (d) => {
-        document.getElementById("editor").style.display = "block";
-        document.getElementById("edit-path").textContent = d.path;
-        const ta = document.getElementById("edit-content");
-        ta.value = d.content;
-        ta.dataset.original = d.content;
+        openEditorModal(d.path, d.content);
       });
 
       let currentPath = "";
-      function loadExplorer(path = "") {
-        fetch(`/explore/${bot}?path=${encodeURIComponent(path)}`)
-          .then((r) => r.json())
-          .then((data) => {
-            currentPath = data.path;
-            document.getElementById("breadcrumbs").innerHTML =
-              '<a href="#" onclick="loadExplorer(\'\')">Root</a>' +
-              (data.path ? " / " + data.path : "");
-            const ul = document.getElementById("entries");
-            ul.innerHTML = "";
-            data.entries.forEach((e) => {
-              const li = document.createElement("li");
-              li.textContent = (e.isDir ? "[DIR] " : "") + e.name;
-              li.style.display = "flex";
-              li.style.alignItems = "center";
-              li.style.gap = "8px";
+      async function loadExplorer(path = "") {
+        try {
+          const r = await fetch(`/explore/${encodeURIComponent(bot)}?path=${encodeURIComponent(path)}`);
+          if (!r.ok) throw new Error("Failed to load");
+          const data = await r.json();
+          currentPath = data.path || "";
+          breadcrumbs.innerHTML = `<a href="#" onclick="loadExplorer('')">Root</a>${currentPath ? " / " + currentPath : ""}`;
+          entriesEl.innerHTML = "";
 
-              li.onclick = () => {
-                if (e.isDir) {
-                  loadExplorer(
-                    currentPath ? currentPath + "/" + e.name : e.name
-                  );
-                } else {
-                  socket.emit("readFile", {
-                    bot,
-                    path: currentPath ? currentPath + "/" + e.name : e.name,
-                  });
-                }
-              };
+          data.entries.forEach((e, idx) => {
+            const li = document.createElement("li");
+            li.className = "entry";
 
-              const del = document.createElement("button");
-              del.textContent = "Delete";
-              del.onclick = (ev) => {
-                ev.stopPropagation();
-                if (
-                  confirm(`Delete ${e.isDir ? "folder" : "file"} "${e.name}"?`)
-                ) {
-                  socket.emit("deleteFile", {
-                    bot,
-                    path: currentPath ? currentPath + "/" + e.name : e.name,
-                    isDir: e.isDir,
-                  });
-                  loadExplorer(currentPath);
-                }
-              };
+            const left = document.createElement("div");
+            left.className = "entry-left";
+            const icon = document.createElement("div");
+            icon.className = "entry-icon";
+            icon.innerHTML = e.isDir ? '<i class="fa-solid fa-folder"></i>' : '<i class="fa-solid fa-file"></i>';
 
-              const renameBtn = document.createElement("button");
-              renameBtn.textContent = "Rename";
-              renameBtn.onclick = (ev) => {
-                ev.stopPropagation();
-                const newName = prompt(`Rename "${e.name}" to:`);
-                if (!newName || newName.trim() === "")
-                  return alert("Invalid name");
-                fetch("/rename", {
+            const nameWrap = document.createElement("div");
+            const nm = document.createElement("div");
+            nm.className = "entry-name";
+            nm.textContent = e.name;
+            const meta = document.createElement("div");
+            meta.className = "entry-meta";
+            meta.textContent = e.isDir ? "Folder" : "File";
+
+            nameWrap.appendChild(nm);
+            nameWrap.appendChild(meta);
+            left.appendChild(icon);
+            left.appendChild(nameWrap);
+
+            // actions: three-dot menu
+            const actions = document.createElement("div");
+            actions.className = "entry-actions";
+            const moreBtn = document.createElement("button");
+            moreBtn.className = "more-btn";
+            moreBtn.innerHTML = '<i class="fa-solid fa-ellipsis-vertical"></i>';
+            actions.appendChild(moreBtn);
+
+            const menu = document.createElement("div");
+            menu.className = "more-menu";
+            const renameBtn = document.createElement("button");
+            renameBtn.textContent = "Rename";
+            const deleteBtn = document.createElement("button");
+            deleteBtn.textContent = "Delete";
+            menu.appendChild(renameBtn);
+            menu.appendChild(deleteBtn);
+
+            // unarchive option only for archives (files, not folders)
+            const isArchive = !e.isDir && /\.(zip|tar|tgz|tar\.gz|tar\.bz2|bz2|rar|7z)$/i.test(e.name);
+            let unarchiveBtn = null;
+            if (isArchive) {
+              unarchiveBtn = document.createElement("button");
+              unarchiveBtn.textContent = "Unarchive";
+              menu.appendChild(unarchiveBtn);
+            }
+
+            actions.appendChild(menu);
+
+            // wire buttons
+            renameBtn.addEventListener('click', async (ev) => {
+              ev.stopPropagation();
+              const newName = prompt(`Rename "${e.name}" to:`);
+              if (!newName || newName.trim() === "") return alert("Invalid name");
+              try {
+                const res = await fetch("/rename", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
                     bot,
                     oldPath: currentPath ? currentPath + "/" + e.name : e.name,
-                    newName: newName.trim(),
-                  }),
-                })
-                  .then((res) => {
-                    if (!res.ok) throw new Error("Rename failed");
-                    return res.text();
+                    newName: newName.trim()
                   })
-                  .then((msg) => {
-                    alert(msg);
-                    loadExplorer(currentPath);
-                  })
-                  .catch((err) => alert(err.message));
-              };
-
-              li.appendChild(renameBtn);
-              li.appendChild(del);
-              ul.appendChild(li);
+                });
+                if (!res.ok) throw new Error(await res.text().catch(()=>res.statusText));
+                alert('Renamed');
+                loadExplorer(currentPath);
+              } catch (err) {
+                alert('Rename failed: ' + (err.message || err));
+              } finally {
+                menu.classList.remove('show');
+              }
             });
 
-            const scripts = data.entries
-              .filter(
-                (e) =>
-                  !e.isDir &&
-                  (e.name.endsWith(".js") || e.name.endsWith(".html"))
-              )
-              .map((e) => e.name);
+            deleteBtn.addEventListener('click', (ev) => {
+              ev.stopPropagation();
+              if (!confirm(`Delete ${e.isDir ? "folder" : "file"} "${e.name}"?`)) { menu.classList.remove('show'); return; }
+              socket.emit("deleteFile", { bot, path: currentPath ? currentPath + "/" + e.name : e.name, isDir: e.isDir });
+              setTimeout(()=> loadExplorer(currentPath), 300);
+              menu.classList.remove('show');
+            });
 
-            document.getElementById("scriptSelect").innerHTML = scripts
-              .map((s) => `<option value="${s}">  ${s}</option>`)
-              .join("");
+            if (unarchiveBtn) {
+              unarchiveBtn.addEventListener('click', async (ev) => {
+                ev.stopPropagation();
+                menu.classList.remove('show');
+                const targetRel = currentPath ? currentPath + "/" + e.name : e.name;
+                if (!confirm(`Unarchive "${e.name}" into current folder?`)) return;
+                // show progress
+                showProgressWheel(6, "Unarchiving...");
+                try {
+                  const resp = await fetch("/extract", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ bot, path: targetRel })
+                  });
+                  const j = await resp.json();
+                  if (!resp.ok || !j.ok) throw new Error((j && j.error) ? j.error : (j && j.msg) ? j.msg : 'Extraction failed');
+                  setProgress(100, j.msg || 'Unarchive complete');
+                  await new Promise(r => setTimeout(r, 250));
+                  loadExplorer(currentPath);
+                  alert('Unarchive completed');
+                } catch (err) {
+                  alert('Unarchive failed: ' + (err.message || err));
+                } finally {
+                  hideProgressWheel();
+                }
+              });
+            }
+
+            // clicking the row
+            li.addEventListener('click', () => {
+              if (e.isDir) {
+                loadExplorer(currentPath ? currentPath + "/" + e.name : e.name);
+              } else {
+                socket.emit("readFile", { bot, path: currentPath ? currentPath + "/" + e.name : e.name });
+              }
+            });
+
+            // toggle menu
+            moreBtn.addEventListener('click', (ev) => {
+              ev.stopPropagation();
+              // close other menus
+              document.querySelectorAll('.more-menu.show').forEach(m=> { if (m !== menu) m.classList.remove('show'); });
+              menu.classList.toggle('show');
+            });
+
+            li.appendChild(left);
+            li.appendChild(actions);
+            entriesEl.appendChild(li);
           });
-      }
 
-      function run() {
-        document.getElementById("console").textContent = "";
-        const file = document.getElementById("scriptSelect").value;
-        socket.emit("action", {
-          bot,
-          cmd: "run",
-          file,
-          port: document.getElementById("portInputn")?.value,
-        });
-      }
+          // populate scriptSelect and task modal select
+          const scripts = data.entries
+            .filter(e => !e.isDir && (e.name.endsWith(".js") || e.name.endsWith(".html")))
+            .map(e => e.name);
 
-      function stop() {
-        socket.emit("action", { bot, cmd: "stop" });
-      }
+          scriptSelect.innerHTML = scripts.map(s => `<option value="${s}">${s}</option>`).join("");
+          const optionsHTML = `<option value="">(none)</option>` + scripts.map(s => `<option value="${s}">${s}</option>`).join("");
+          taskStartupSelect.innerHTML = optionsHTML;
 
-      function upload() {
-        const f = document.getElementById("fileUpload").files[0];
-        if (!f) return;
-        const fd = new FormData();
-        fd.append("file", f);
-        fetch(`/upload?`, { method: "POST", body: fd }).then(() =>
-          loadExplorer(currentPath)
-        );
-      }
-
-      function createNew() {
-        const type = prompt(
-          "Type 'file' to create a file or 'folder' to create a folder:"
-        );
-        if (!type || (type !== "file" && type !== "folder"))
-          return alert("Invalid type.");
-
-        const name = prompt(`Enter ${type} name:`);
-        if (!name) return;
-
-        fetch(`/create`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            bot,
-            type,
-            name,
-            path: currentPath,
-          }),
-        })
-          .then((r) => {
-            if (!r.ok) throw new Error("Error creating " + type);
-            return r.text();
-          })
-          .then(() => loadExplorer(currentPath))
-          .catch((err) => alert(err.message));
-      }
-
-      function save() {
-        socket.emit("writeFile", {
-          bot,
-          path: document.getElementById("edit-path").textContent,
-          content: document.getElementById("edit-content").value,
-        });
-      }
-
-      function discard() {
-        const ta = document.getElementById("edit-content");
-        ta.value = ta.dataset.original;
-      }
-
-      document.addEventListener("DOMContentLoaded", () => loadExplorer());
-
-      function sendCommand() {
-        const cmd = document.getElementById("cmdInput").value;
-        if (cmd.trim() !== "") {
-          socket.emit("command", { bot: "<%= bot %>", command: cmd });
-          document.getElementById("cmdInput").value = "";
+          // restore saved startup
+          const saved = localStorage.getItem(`startup-${bot}`);
+          if (saved) {
+            if ([...taskStartupSelect.options].some(o=>o.value===saved)) taskStartupSelect.value = saved;
+          }
+        } catch (err) {
+          console.error(err);
+          entriesEl.innerHTML = `<li style="color:var(--muted)">Failed to load</li>`;
         }
       }
 
-      document
-        .getElementById("cmdInput")
-        .addEventListener("keyup", function (event) {
-          if (event.key === "Enter") {
-            sendCommand();
-          }
+      /* ------------------ Progress wheel logic ------------------ */
+
+      let currentProgress = 0;
+      let simInterval = null;
+      let isActiveOperation = false;
+      let operationStart = null;
+
+      function showProgressWheel(initialPercent = 0, msg = "Processing...") {
+        isActiveOperation = true;
+        operationStart = Date.now();
+        progressWheel.classList.remove('hidden');
+        setProgress(initialPercent, msg);
+      }
+
+      function hideProgressWheel() {
+        isActiveOperation = false;
+        setTimeout(()=>{
+          progressWheel.classList.add('hidden');
+          setProgress(0);
+          closeProgressPopup();
+          operationStart = null;
+          popupTime.textContent = "—";
+        }, 300);
+      }
+
+      function setProgress(percent, msg = "Processing...") {
+        if (typeof percent !== 'number') percent = 0;
+        percent = Math.max(0, Math.min(100, Math.round(percent)));
+        currentProgress = percent;
+        progressFill.style.height = percent + "%";
+        popupPercent.textContent = percent + "%";
+        popupBar.style.width = percent + "%";
+        if (msg) popupMsg.textContent = msg;
+        if (operationStart) {
+          const elapsed = Math.floor((Date.now() - operationStart) / 1000);
+          popupTime.textContent = `${elapsed}s elapsed`;
+        }
+        if (percent >= 100 && isActiveOperation) {
+          setTimeout(()=> hideProgressWheel(), 450);
+        }
+      }
+
+      function openProgressPopup() {
+        progressPopup.style.display = "block";
+        progressPopup.setAttribute('aria-hidden', 'false');
+        popupPercent.textContent = currentProgress + "%";
+        popupBar.style.width = currentProgress + "%";
+        if (operationStart) {
+          const elapsed = Math.floor((Date.now() - operationStart) / 1000);
+          popupTime.textContent = `${elapsed}s elapsed`;
+        } else {
+          popupTime.textContent = "—";
+        }
+      }
+      function closeProgressPopup() {
+        progressPopup.style.display = "none";
+        progressPopup.setAttribute('aria-hidden', 'true');
+      }
+      progressWheel.addEventListener('click', (e) => {
+        if (progressPopup.style.display === 'block') closeProgressPopup();
+        else openProgressPopup();
+      });
+      popupClose.addEventListener('click', ()=> closeProgressPopup());
+
+      /* ------------------ Drag & Drop handling ------------------ */
+
+      function enableDropHandlers() {
+        const modalInner = document.querySelector('#filesModal .modal');
+        if (!modalInner) return;
+        ['dragenter','dragover','dragleave','drop'].forEach(evt => {
+          modalInner.addEventListener(evt, (e)=> e.preventDefault(), { passive: false });
         });
+        modalInner.addEventListener('dragenter', onDragEnter);
+        modalInner.addEventListener('dragover', onDragOver);
+        modalInner.addEventListener('dragleave', onDragLeave);
+        modalInner.addEventListener('drop', onDrop);
+      }
+
+      function disableDropHandlers() {
+        const modalInner = document.querySelector('#filesModal .modal');
+        if (!modalInner) return;
+        modalInner.removeEventListener('dragenter', onDragEnter);
+        modalInner.removeEventListener('dragover', onDragOver);
+        modalInner.removeEventListener('dragleave', onDragLeave);
+        modalInner.removeEventListener('drop', onDrop);
+      }
+
+      let dragCounter = 0;
+      function onDragEnter(e) {
+        e.preventDefault();
+        dragCounter++;
+        dropOverlay.classList.add('visible');
+        dropTitle.textContent = "Drop files here to upload";
+        dropSubtitle.textContent = "Release to upload to current folder";
+      }
+      function onDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+        if (!dropOverlay.classList.contains('visible')) dropOverlay.classList.add('visible');
+      }
+      function onDragLeave(e) {
+        e.preventDefault();
+        dragCounter = Math.max(0, dragCounter - 1);
+        if (dragCounter === 0) dropOverlay.classList.remove('visible');
+      }
+
+      async function onDrop(e) {
+        e.preventDefault();
+        dragCounter = 0;
+        dropOverlay.classList.remove('visible');
+
+        const items = e.dataTransfer.files;
+        if (!items || items.length === 0) return;
+        const files = Array.from(items);
+        await uploadFilesSequential(files);
+      }
+
+      async function uploadFilesSequential(files) {
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+          const idx = i + 1;
+          const total = files.length;
+          const msgBase = `Uploading ${idx} of ${total} — ${file.name}`;
+          try {
+            await uploadSingleFileWithProgress(file, (percent, stateMsg) => {
+              setProgress(percent, stateMsg || msgBase);
+            }, msgBase);
+            await new Promise(r => setTimeout(r, 150));
+            loadExplorer(currentPath);
+          } catch (err) {
+            console.error('Upload failed for', file.name, err);
+            alert(`Upload failed for ${file.name}: ${err.message || err}`);
+          }
+        }
+        setTimeout(()=> { hideProgressWheel(); }, 400);
+        alert('Uploads completed');
+      }
+
+      function uploadSingleFileWithProgress(file, onProgress, baseMsg) {
+        return new Promise((resolve, reject) => {
+          const fd = new FormData();
+          fd.append('file', file);
+          fd.append('bot', bot);
+          fd.append('path', currentPath || '');
+
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', '/upload');
+
+          xhr.upload.onprogress = (e) => {
+            if (e.lengthComputable) {
+              const percent = Math.round((e.loaded / e.total) * 100);
+              onProgress(percent, `${baseMsg} (${percent}%)`);
+            } else {
+              onProgress(6, `${baseMsg}...`);
+            }
+          };
+
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                const j = JSON.parse(xhr.responseText || "{}");
+                onProgress(100, j && j.msg ? j.msg : "Finalizing...");
+              } catch (e) {
+                onProgress(100, "Upload complete");
+              }
+              resolve();
+            } else {
+              reject(new Error(xhr.responseText || xhr.statusText || ('status ' + xhr.status)));
+            }
+          };
+
+          xhr.onerror = () => reject(new Error('Network error'));
+
+          showProgressWheel(0, baseMsg);
+          xhr.send(fd);
+        });
+      }
+
+      /* ------------------ Editor modal functions ------------------ */
+      function openEditorModal(path, content) {
+        editorModal.classList.add('show');
+        editorModal.style.display = 'flex';
+        document.getElementById('editorPath').textContent = path;
+        const lower = path.toLowerCase();
+        if (lower.endsWith('.js')) {
+          textArea.style.display = 'none';
+          codeArea.style.display = 'block';
+          codeArea.innerHTML = highlightJS(content);
+          codeArea.dataset.raw = content;
+          placeCaretAtEnd(codeArea);
+          codeArea.focus();
+        } else {
+          codeArea.style.display = 'none';
+          textArea.style.display = 'block';
+          textArea.value = content;
+          textArea.dataset.original = content;
+          textArea.focus();
+        }
+      }
+      function closeEditorModal() {
+        editorModal.classList.remove('show');
+        editorModal.style.display = 'none';
+        document.getElementById('editorPath').textContent = '';
+        codeArea.innerHTML = '';
+        textArea.value = '';
+      }
+
+      editorModalClose.addEventListener('click', closeEditorModal);
+      editorDiscard.addEventListener('click', () => {
+        if (textArea.style.display !== 'none') {
+          textArea.value = textArea.dataset.original || '';
+        } else {
+          codeArea.innerHTML = highlightJS(codeArea.dataset.raw || '');
+        }
+      });
+
+      editorSave.addEventListener('click', () => {
+        const path = document.getElementById('editorPath').textContent;
+        if (!path) return alert('No file open');
+        let contentToSave = '';
+        if (textArea.style.display !== 'none') {
+          contentToSave = textArea.value;
+        } else {
+          contentToSave = getTextFromContentEditable(codeArea);
+        }
+        socket.emit('writeFile', { bot, path, content: contentToSave });
+        setTimeout(()=> { loadExplorer(currentPath); alert('Saved'); closeEditorModal(); }, 200);
+      });
+
+      // Run/Stop logic (uses saved startup or selected script)
+      function run() {
+        consoleEl.textContent = '';
+        const savedStartup = localStorage.getItem(`startup-${bot}`) || '';
+        const selected = savedStartup || scriptSelect.value;
+        if (!selected) return alert('No script selected to run');
+        statusLabel.textContent = 'running';
+        socket.emit('action', { bot, cmd: 'run', file: selected });
+      }
+      function stop() {
+        statusLabel.textContent = 'stopping';
+        socket.emit('action', { bot, cmd: 'stop' });
+        setTimeout(()=> statusLabel.textContent = 'idle', 500);
+      }
+
+      /* ------------------ Upload handler (file input) ------------------ */
+      fileUploadModal.addEventListener('change', () => {
+        const f = fileUploadModal.files[0];
+        if (!f) return;
+        uploadSingleFileWithProgress(f, (percent, msg) => {
+          setProgress(percent, msg);
+        }, `Uploading 1 of 1 — ${f.name}`)
+        .then(()=> {
+          loadExplorer(currentPath);
+          setTimeout(()=> { hideProgressWheel(); alert('Upload complete'); }, 350);
+        })
+        .catch((err)=> {
+          hideProgressWheel();
+          alert('Upload failed: ' + (err && err.message ? err.message : 'unknown'));
+        })
+        .finally(()=> { fileUploadModal.value = ''; });
+      });
+
+      /* ------------------ Create new (simulate progress) ------------------ */
+      function startSimulatedProgress(from = 0, to = 90, duration = 400) {
+        if (simInterval) { clearInterval(simInterval); simInterval = null; }
+        let pct = from;
+        const steps = Math.max(8, Math.floor(duration / 80));
+        const step = (to - from) / steps;
+        simInterval = setInterval(()=> {
+          pct = Math.min(99, pct + step);
+          setProgress(Math.round(pct));
+          if (pct >= to) {
+            clearInterval(simInterval);
+            simInterval = null;
+          }
+        }, Math.max(40, Math.floor(duration / steps)));
+      }
+
+      function createNew() {
+        const type = prompt("Type 'file' to create a file or 'folder' to create a folder:");
+        if (!type || (type !== 'file' && type !== 'folder')) return alert('Invalid type.');
+        const name = prompt(`Enter ${type} name:`);
+        if (!name) return;
+
+        showProgressWheel(4, type === 'file' ? "Creating file..." : "Creating folder...");
+        startSimulatedProgress(4, 88, 420);
+
+        fetch('/create', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json' },
+          body: JSON.stringify({ bot, type, name, path: currentPath })
+        })
+        .then(async (r)=> {
+          if(!r.ok) {
+            const txt = await r.text().catch(()=>null);
+            throw new Error(txt || 'Error creating ' + type);
+          }
+          return r.text();
+        })
+        .then(()=> {
+          setProgress(100, (type === 'file' ? "File created" : "Folder created"));
+          loadExplorer(currentPath);
+          setTimeout(()=> { hideProgressWheel(); alert((type === 'file' ? 'File' : 'Folder') + ' created successfully'); }, 350);
+        })
+        .catch((err)=> {
+          hideProgressWheel();
+          alert(err.message);
+        });
+      }
+
+      // Commands
+      function sendCommand() {
+        const cmd = cmdInput.value.trim();
+        if (cmd === '') return;
+        socket.emit('command', { bot, command: cmd });
+        cmdInput.value = '';
+      }
+      cmdInput.addEventListener('keyup', (e)=> { if (e.key === 'Enter') sendCommand(); });
+
+      function clearConsole(){ consoleEl.textContent = ''; }
+      function focusConsole(){ window.scrollTo({ top: 0, behavior:'smooth' }); cmdInput.focus(); }
+
+      // Files modal open/close
+      function openFilesModal(){
+        filesModal.classList.add('show');
+        filesModal.style.display = 'flex';
+        loadExplorer(currentPath);
+        enableDropHandlers();
+      }
+      function closeFilesModal(){ filesModal.classList.remove('show'); filesModal.style.display = 'none'; disableDropHandlers(); }
+      filesModalClose.addEventListener('click', closeFilesModal);
+
+      // Task modal open/close
+      function openTaskModal(){
+        taskModal.classList.add('show');
+        taskModal.style.display = 'flex';
+        loadExplorer(currentPath);
+      }
+      function closeTaskModal(){ taskModal.classList.remove('show'); taskModal.style.display = 'none'; }
+      taskModalClose.addEventListener('click', closeTaskModal);
+
+      // Save startup selection
+      saveStartupBtn.addEventListener('click', ()=> {
+        const val = taskStartupSelect.value || '';
+        if (val) {
+          localStorage.setItem(`startup-${bot}`, val);
+          alert('Startup file saved: ' + val);
+        } else {
+          localStorage.removeItem(`startup-${bot}`);
+          alert('Startup file cleared');
+        }
+      });
+
+      // ESC closes modals / popup / menus
+      document.addEventListener('keydown', (e)=> {
+        if (e.key === 'Escape') {
+          if (editorModal && editorModal.classList.contains('show')) { closeEditorModal(); return; }
+          if (filesModal && filesModal.classList.contains('show')) { closeFilesModal(); return; }
+          if (taskModal && taskModal.classList.contains('show')) { closeTaskModal(); return; }
+          if (progressPopup && progressPopup.style.display === 'block') { closeProgressPopup(); return; }
+        }
+      });
+
+      // close open menus when clicking outside
+      document.addEventListener('click', (e) => {
+        document.querySelectorAll('.more-menu.show').forEach(m => m.classList.remove('show'));
+      });
+
+      // Init
+      document.addEventListener('DOMContentLoaded', ()=> {
+        loadExplorer();
+        function applyScale() {
+          const dpr = window.devicePixelRatio || 1;
+          const scale = Math.max(0.75, Math.min(1.12, dpr));
+          document.documentElement.style.setProperty('--ui-scale', scale);
+        }
+        applyScale();
+        window.addEventListener('resize', applyScale);
+      });
+
+      socket.on('output', ()=> { consoleEl.scrollTop = consoleEl.scrollHeight; });
+
+      /* ---------- Simple JS highlighter for contenteditable ---------- */
+      function escapeHtmlRaw(s){
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      }
+
+      function highlightJS(src){
+        if (typeof src !== 'string') src = '';
+        let out = escapeHtmlRaw(src);
+
+        out = out.replace(/(\/\*[\s\S]*?\*\/|\/\/[^\n]*)/g, function(m){ return `<span class="com">${m.replace(/</g,'&lt;')}</span>`; });
+        out = out.replace(/("([^"\\]|\\.)*"|'([^'\\]|\\.)*'|`([^`\\]|\\.)*`)/g, function(m){ return `<span class="str">${m.replace(/</g,'&lt;')}</span>`; });
+        out = out.replace(/\b([0-9]+(?:\.[0-9]+)?)\b/g, `<span class="num">$1</span>`);
+        out = out.replace(/\bclass\s+([A-Za-z_$][\w$]*)/g, function(_, name){ return `class <span class="cls">${name}</span>`; });
+        out = out.replace(/\bfunction\s+([A-Za-z_$][\w$]*)\s*\(/g, function(_, name){ return `function <span class="fn">${name}</span>(`; });
+        out = out.replace(/([A-Za-z_$][\w$]*)\s*=\s*\(.*?\)\s*=>/g, function(m){ return m.replace(/([A-Za-z_$][\w$]*)/, `<span class="fn">$1</span>`); });
+        const keywords = ['const','let','var','return','if','else','for','while','switch','case','break','continue','class','new','try','catch','finally','throw','await','async','import','from','export','extends','super','this','typeof','instanceof','in'];
+        const kwRegex = new RegExp('\\b(' + keywords.join('|') + ')\\b', 'g');
+        out = out.replace(kwRegex, `<span class="kw">$1</span>`);
+        out = out.replace(/\r\n|\r|\n/g, '<div>$&</div>');
+        out = out.replace(/<div>\n<\/div>/g,'<div></div>');
+        return out;
+      }
+
+      function getTextFromContentEditable(el){
+        let txt = el.innerText || el.textContent || '';
+        txt = txt.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+        return txt;
+      }
+
+      function placeCaretAtEnd(el) {
+        el.focus();
+        if (typeof window.getSelection !== "undefined" && typeof document.createRange !== "undefined") {
+          const range = document.createRange();
+          range.selectNodeContents(el);
+          range.collapse(false);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+      }
     </script>
 
-    <script
-      src="https://kit.fontawesome.com/6bcbc61285.js"
-      crossorigin="anonymous"
-    ></script>
+    <script src="https://kit.fontawesome.com/6bcbc61285.js" crossorigin="anonymous"></script>
   </body>
 </html>

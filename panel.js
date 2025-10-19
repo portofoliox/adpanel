@@ -1,4 +1,4 @@
-// panel.js
+// panel.js (complete) - with user-access auto-sync on startup
 const express = require("express");
 const path = require("path");
 const fs = require("fs");
@@ -8,6 +8,7 @@ const { spawn } = require("child_process");
 const session = require("express-session");
 const bcrypt = require("bcrypt");
 const speakeasy = require("speakeasy");
+const tar = require("tar");
 
 const app = express();
 const http = require("http").createServer(app);
@@ -20,7 +21,9 @@ const DASHBOARD_CSS = path.join(PUBLIC_DIR, "dashboard.css");
 const STYLE_CSS = path.join(PUBLIC_DIR, "style.css");
 const CONFIG_FILE = path.join(__dirname, "config.json");
 
-const upload = multer({ dest: "uploads/" });
+const USER_ACCESS_FILE = path.join(__dirname, "user-access.json");
+
+const upload = multer({ dest: UPLOADS_DIR });
 const nodeVersions = ["14", "16", "18", "20"];
 
 [BOTS_DIR, UPLOADS_DIR, PUBLIC_DIR].forEach((dir) => {
@@ -28,6 +31,110 @@ const nodeVersions = ["14", "16", "18", "20"];
 });
 
 const USERS_FILE = path.join(__dirname, "user.json");
+
+/* -------------------- Ensure user-access.json exists (non-destructive) -------------------- */
+try {
+  if (!fs.existsSync(USER_ACCESS_FILE)) {
+    const defaultAccess = [];
+    fs.writeFileSync(USER_ACCESS_FILE, JSON.stringify(defaultAccess, null, 2), "utf8");
+    console.log("[user-access] Created default user-access.json");
+  }
+} catch (e) {
+  console.warn("[user-access] Could not create default file:", e && e.message);
+}
+
+/* -------------------- Rate limiter (security.json) -------------------- */
+const SECURITY_FILE = path.join(__dirname, "security.json");
+
+// Default security config
+let security = {
+  rate_limiting: false,
+  limit: 5,
+  window_seconds: 120,
+};
+
+try {
+  if (!fs.existsSync(SECURITY_FILE)) {
+    fs.writeFileSync(SECURITY_FILE, JSON.stringify(security, null, 2), "utf8");
+    console.log("[rate-limiter] Created default security.json");
+  } else {
+    try {
+      const raw = fs.readFileSync(SECURITY_FILE, "utf8");
+      const parsed = JSON.parse(raw);
+      security = Object.assign(security, parsed || {});
+      console.log("[rate-limiter] Loaded security.json:", security);
+    } catch (e) {
+      console.warn("[rate-limiter] Failed to parse existing security.json, using defaults:", e && e.message);
+    }
+  }
+} catch (err) {
+  console.error("[rate-limiter] Error ensuring security.json:", err);
+}
+
+try {
+  fs.watch(SECURITY_FILE, (evtType) => {
+    if (evtType === "change" || evtType === "rename") {
+      try {
+        const raw = fs.readFileSync(SECURITY_FILE, "utf8");
+        const parsed = JSON.parse(raw);
+        security = Object.assign(security, parsed || {});
+        console.log("[rate-limiter] security.json reloaded:", security);
+      } catch (e) {
+        console.warn("[rate-limiter] Failed to reload security.json:", e && e.message);
+      }
+    }
+  });
+} catch (e) {
+  console.warn("[rate-limiter] fs.watch failed or not available:", e && e.message);
+}
+
+const rateRequests = new Map();
+
+function rateLimiterMiddleware(req, res, next) {
+  try {
+    if (!security || security.rate_limiting !== true) return next();
+
+    const forwarded = req.headers["x-forwarded-for"];
+    const ip = forwarded ? forwarded.split(",")[0].trim() : (req.ip || req.connection.remoteAddress || "unknown");
+
+    const now = Date.now();
+    const windowMs = (security.window_seconds || 120) * 1000;
+    const limit = security.limit || 5;
+
+    let arr = rateRequests.get(ip) || [];
+
+    arr = arr.filter(ts => (now - ts) <= windowMs);
+
+    if (arr.length >= limit) {
+      const oldest = arr[0] || now;
+      const retryAfter = Math.ceil((oldest + windowMs - now) / 1000);
+      res.setHeader("Retry-After", String(retryAfter));
+      return res.status(429).send("429 Too Many Requests - Access temporarily blocked by rate limiter. If you're an admin, you can disable that setting false in security.json.");
+    }
+
+    arr.push(now);
+    rateRequests.set(ip, arr);
+
+    return next();
+  } catch (e) {
+    console.warn("[rate-limiter] middleware error:", e && e.message);
+    return next();
+  }
+}
+
+setInterval(() => {
+  try {
+    const now = Date.now();
+    const windowMs = (security.window_seconds || 120) * 1000;
+    for (const [ip, arr] of rateRequests.entries()) {
+      const kept = arr.filter(ts => (now - ts) <= windowMs);
+      if (kept.length > 0) rateRequests.set(ip, kept);
+      else rateRequests.delete(ip);
+    }
+  } catch (e) {
+    console.warn("[rate-limiter] cleanup error:", e && e.message);
+  }
+}, 30_000);
 
 /* -------------------- helpers: users.json (array) -------------------- */
 
@@ -73,14 +180,146 @@ function updateUser(updatedUser) {
   return saveUsers(users);
 }
 
+/* -------------------- helpers: user-access.json -------------------- */
+
+function loadUserAccess() {
+  try {
+    if (!fs.existsSync(USER_ACCESS_FILE)) return [];
+    const raw = fs.readFileSync(USER_ACCESS_FILE, "utf8").trim();
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    console.warn("[user-access] failed to read/parse user-access.json:", e && e.message);
+    return [];
+  }
+}
+
+function saveUserAccess(arr) {
+  try {
+    fs.writeFileSync(USER_ACCESS_FILE, JSON.stringify(Array.isArray(arr) ? arr : [], null, 2), "utf8");
+    return true;
+  } catch (e) {
+    console.error("[user-access] failed to write user-access.json:", e && e.message);
+    return false;
+  }
+}
+
+function getAccessListForEmail(email) {
+  if (!email) return [];
+  const arr = loadUserAccess();
+  const record = arr.find(r => String(r.email).toLowerCase() === String(email).toLowerCase());
+  if (!record) return [];
+  return Array.isArray(record.servers) ? record.servers : [];
+}
+
+function setAccessListForEmail(email, servers) {
+  if (!email) return false;
+  const arr = loadUserAccess();
+  const idx = arr.findIndex(r => String(r.email).toLowerCase() === String(email).toLowerCase());
+  if (idx === -1) {
+    arr.push({ email, servers: Array.isArray(servers) ? servers : [] });
+  } else {
+    arr[idx].servers = Array.isArray(servers) ? servers : [];
+  }
+  return saveUserAccess(arr);
+}
+
+function addAccessForEmail(email, server) {
+  if (!email || !server) return false;
+  const arr = loadUserAccess();
+  let rec = arr.find(r => String(r.email).toLowerCase() === String(email).toLowerCase());
+  if (!rec) {
+    rec = { email, servers: [server] };
+    arr.push(rec);
+    return saveUserAccess(arr);
+  }
+  if (!Array.isArray(rec.servers)) rec.servers = [];
+  if (!rec.servers.includes(server)) rec.servers.push(server);
+  return saveUserAccess(arr);
+}
+
+function removeAccessForEmail(email, server) {
+  if (!email || !server) return false;
+  const arr = loadUserAccess();
+  const rec = arr.find(r => String(r.email).toLowerCase() === String(email).toLowerCase());
+  if (!rec) return saveUserAccess(arr);
+  if (!Array.isArray(rec.servers)) rec.servers = [];
+  rec.servers = rec.servers.filter(s => s !== server);
+  return saveUserAccess(arr);
+}
+
+function userHasAccessToServer(email, botName) {
+  if (!email) return false;
+  const u = findUserByEmail(email);
+  if (u && u.admin) return true;
+  const access = getAccessListForEmail(email);
+  if (!access || access.length === 0) return false;
+  if (access.includes("all")) return true;
+  return access.includes(botName);
+}
+
+/* -------------------- Sync user.json -> user-access.json on startup -------------------- */
+
+/**
+ * Reads all emails from user.json and ensures each email exists in user-access.json.
+ * If an email missing, adds { email, servers: [] }.
+ * Does not modify existing records or servers arrays.
+ */
+function syncUserAccessWithUsers() {
+  try {
+    const users = loadUsers(); // array of user objects with .email
+    if (!Array.isArray(users) || users.length === 0) {
+      console.log("[user-access] No users found in user.json to sync.");
+      return;
+    }
+
+    const access = loadUserAccess(); // existing records
+    const lowerSet = new Set(access.map(r => String(r.email).toLowerCase()));
+
+    let added = 0;
+    users.forEach(u => {
+      const email = u && u.email ? String(u.email).trim() : null;
+      if (!email) return;
+      const lower = email.toLowerCase();
+      if (!lowerSet.has(lower)) {
+        // add a new entry with empty servers array
+        access.push({ email, servers: [] });
+        lowerSet.add(lower);
+        added++;
+      }
+    });
+
+    if (added > 0) {
+      const ok = saveUserAccess(access);
+      if (ok) {
+        console.log(`[user-access] Synced users -> user-access.json: added ${added} entries.`);
+      } else {
+        console.warn("[user-access] Failed to save user-access.json after sync.");
+      }
+    } else {
+      console.log("[user-access] user-access.json already contains all users from user.json.");
+    }
+  } catch (e) {
+    console.error("[user-access] sync failed:", e && e.message);
+  }
+}
+
+// perform initial sync at startup (after ensuring file exists)
+syncUserAccessWithUsers();
+
 /* -------------------- express / view setup -------------------- */
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(express.static(PUBLIC_DIR));
 app.use(express.urlencoded({ extended: true }));
-app.use(express.json({ limit: "25mb" })); // allow big dataurls if user uploads as base64
+app.use(express.json({ limit: "50mb" }));
 app.use(session({ secret: "adpanel", resave: false, saveUninitialized: true }));
+
+app.set("trust proxy", true);
+
+app.use(rateLimiterMiddleware);
 
 function isAuthenticated(req) {
   if (!req.session || !req.session.user) return false;
@@ -171,6 +410,22 @@ app.post("/forgot-password", (req, res) => {
   res.send("Password has been reset. Please log in with the new password.");
 });
 
+app.post('/logout', (req, res) => {
+  if (req.session) {
+    req.session.destroy(err => {
+      if (err) {
+        console.error(err);
+        return res.status(500).json({ error: 'Failed to logout' });
+      }
+      res.clearCookie('connect.sid');
+      return res.json({ success: true });
+    });
+  } else {
+    res.clearCookie('connect.sid');
+    return res.json({ success: true });
+  }
+});
+
 /* allow unauthenticated access to login/register/forgot-password */
 app.use((req, res, next) => {
   if (
@@ -185,21 +440,54 @@ app.use((req, res, next) => {
 /* -------------------- Index and Settings -------------------- */
 
 app.get("/", (req, res) => {
-  const bots = fs.existsSync(BOTS_DIR) ? fs.readdirSync(BOTS_DIR) : [];
-  // pass isAdmin and a sanitized user object (email + admin) to the template
+  const allBots = fs.existsSync(BOTS_DIR) ? fs.readdirSync(BOTS_DIR) : [];
   const userObj = req.session && req.session.user ? findUserByEmail(req.session.user) : null;
   const safeUser = userObj ? { email: userObj.email, admin: !!userObj.admin } : null;
-  res.render("index", { bots, isAdmin: safeUser ? safeUser.admin : false, user: safeUser });
+
+  let botsToShow = [];
+  if (safeUser && safeUser.admin) {
+    botsToShow = allBots.filter(n => {
+      try {
+        return fs.statSync(path.join(BOTS_DIR, n)).isDirectory();
+      } catch (e) {
+        return false;
+      }
+    });
+  } else {
+    const access = getAccessListForEmail(req.session.user);
+    if (access && access.includes("all")) {
+      botsToShow = allBots.filter(n => {
+        try {
+          return fs.statSync(path.join(BOTS_DIR, n)).isDirectory();
+        } catch (e) {
+          return false;
+        }
+      });
+    } else {
+      botsToShow = allBots.filter(n => {
+        try {
+          if (!fs.statSync(path.join(BOTS_DIR, n)).isDirectory()) return false;
+          if (!access || access.length === 0) return false;
+          return access.includes(n);
+        } catch (e) {
+          return false;
+        }
+      });
+    }
+  }
+
+  res.render("index", { bots: botsToShow, isAdmin: safeUser ? safeUser.admin : false, user: safeUser });
 });
 
-// Only allow admins to access /settings
 app.get("/settings", (req, res) => {
-  if (!isAdmin(req)) {
-    // redirect to index if not admin
-    return res.redirect("/");
-  }
+  if (!isAdmin(req)) return res.redirect("/");
   const user = findUserByEmail(req.session.user);
   res.render("settings", { user });
+});
+
+app.get("/settings/servers", (req, res) => {
+  if (!isAdmin(req)) return res.redirect("/");
+  res.render("server", { user: findUserByEmail(req.session.user) });
 });
 
 /* -------------------- Background CSS updater -------------------- */
@@ -297,7 +585,6 @@ app.post("/api/settings/change-password", (req, res) => {
       return res.status(500).json({ error: "failed to save user" });
     }
 
-    // remove 'password' from config.json if present (best-effort)
     try {
       if (fs.existsSync(CONFIG_FILE)) {
         const raw = fs.readFileSync(CONFIG_FILE, "utf8");
@@ -318,59 +605,208 @@ app.post("/api/settings/change-password", (req, res) => {
   }
 });
 
-/* -------------------- Upload / bots / process / sockets -------------------- */
+/* -------------------- Servers API (for settings UI) -------------------- */
 
-app.post("/upload", upload.single("file"), (req, res) => {
-  if (!req.file) return res.redirect("/");
+app.get("/api/settings/servers", (req, res) => {
+  if (!isAdmin(req)) return res.status(403).json({ error: "not authorized" });
   try {
-    const zip = new AdmZip(req.file.path);
-    const name = path.parse(req.file.originalname).name.replace(/[^\w-]/g, "");
-    const temp = path.join(UPLOADS_DIR, name);
-    zip.extractAllTo(temp, true);
-
-    function findRoot(dir) {
-      const files = fs.readdirSync(dir);
-      if (files.some((f) => f.endsWith(".js"))) return dir;
-      for (const f of files) {
-        const full = path.join(dir, f);
-        if (fs.statSync(full).isDirectory()) {
-          const r = findRoot(full);
-          if (r) return r;
-        }
-      }
-      return null;
-    }
-
-    const src = findRoot(temp) || temp;
-    const dest = path.join(BOTS_DIR, name);
-    if (fs.existsSync(dest)) fs.rmSync(dest, { recursive: true, force: true });
-    fs.renameSync(src, dest);
-    fs.rmSync(req.file.path, { force: true });
-    fs.rmSync(temp, { recursive: true, force: true });
+    if (!fs.existsSync(BOTS_DIR)) return res.json({ names: [] });
+    const entries = fs.readdirSync(BOTS_DIR, { withFileTypes: true });
+    const names = entries.filter(e => e.isDirectory()).map(d => d.name);
+    return res.json({ names });
   } catch (e) {
-    console.error(e);
+    console.error("Failed to list servers:", e);
+    return res.status(500).json({ error: "failed to read servers" });
   }
-  res.redirect("/");
 });
 
-function findRoot(dir) {
-  const entries = fs.readdirSync(dir);
-  if (entries.some((f) => f.endsWith(".js") || f.endsWith(".html"))) return dir;
-  for (const entry of entries) {
-    const full = path.join(dir, entry);
-    if (fs.statSync(full).isDirectory()) {
-      const found = findRoot(full);
-      if (found) return found;
+/**
+ * GET /api/my-servers
+ * Returns JSON { names: [<folder names>] } for the current user (non-admin users)
+ */
+app.get("/api/my-servers", (req, res) => {
+  if (!isAuthenticated(req)) return res.status(401).json({ error: "not authenticated" });
+  try {
+    const all = fs.existsSync(BOTS_DIR) ? fs.readdirSync(BOTS_DIR, { withFileTypes: true }) : [];
+    const dirNames = all.filter(e => e.isDirectory()).map(d => d.name);
+
+    const userEmail = req.session.user;
+    const u = findUserByEmail(userEmail);
+    if (u && u.admin) {
+      return res.json({ names: dirNames });
     }
+
+    const access = getAccessListForEmail(userEmail) || [];
+    let names = [];
+    if (access.includes("all")) {
+      names = dirNames;
+    } else {
+      names = dirNames.filter(n => access.includes(n));
+    }
+    return res.json({ names });
+  } catch (e) {
+    console.error("Failed to list my-servers:", e);
+    return res.status(500).json({ error: "failed to read servers" });
   }
-  return null;
-}
+});
+
+/* -------------------- Accounts API (admin-only) -------------------- */
+/**
+ * GET /api/settings/accounts
+ * Returns { accounts: [ { email, servers } ], bots: [<all bot folders>] }
+ * Admin-only. Admin users (those with admin:true in user.json) are excluded from the returned accounts list.
+ */
+app.get("/api/settings/accounts", (req, res) => {
+  if (!isAdmin(req)) return res.status(403).json({ error: "not authorized" });
+  try {
+    const accountsRaw = loadUserAccess(); // array of { email, servers }
+    const users = loadUsers(); // to check admin flags
+    const adminEmails = users.filter(u => u && u.admin).map(u => String(u.email).toLowerCase());
+
+    const accounts = Array.isArray(accountsRaw) ? accountsRaw.map(a => ({
+      email: a.email,
+      servers: Array.isArray(a.servers) ? a.servers : []
+    })) : [];
+
+    // exclude admin emails from the list (as requested)
+    const filtered = accounts.filter(a => !adminEmails.includes(String(a.email).toLowerCase()));
+
+    // list all bot folders
+    const allBots = fs.existsSync(BOTS_DIR) ? fs.readdirSync(BOTS_DIR, { withFileTypes: true }).filter(e => e.isDirectory()).map(d => d.name) : [];
+
+    return res.json({ accounts: filtered, bots: allBots });
+  } catch (e) {
+    console.error("Failed to read accounts:", e);
+    return res.status(500).json({ error: "failed to read accounts" });
+  }
+});
+
+/**
+ * POST /api/settings/accounts/:email/add
+ * body: { server: "<serverName>" }
+ * Admin-only. Adds server to user's access list (creates record if missing).
+ */
+app.post("/api/settings/accounts/:email/add", (req, res) => {
+  if (!isAdmin(req)) return res.status(403).json({ error: "not authorized" });
+  const encoded = req.params.email || "";
+  let email;
+  try { email = decodeURIComponent(encoded); } catch (e) { email = encoded; }
+  const server = req.body && req.body.server ? String(req.body.server) : "";
+  if (!email || !server) return res.status(400).json({ error: "missing email or server" });
+
+  const allBots = fs.existsSync(BOTS_DIR) ? fs.readdirSync(BOTS_DIR, { withFileTypes: true }).filter(e => e.isDirectory()).map(d => d.name) : [];
+  if (!allBots.includes(server) && server !== "all") {
+    return res.status(400).json({ error: "server not found" });
+  }
+
+  try {
+    const ok = addAccessForEmail(email, server);
+    if (!ok) return res.status(500).json({ error: "failed to save access" });
+    return res.json({ ok: true });
+  } catch (e) {
+    console.error("Failed to add access:", e);
+    return res.status(500).json({ error: "failed to add access" });
+  }
+});
+
+/**
+ * POST /api/settings/accounts/:email/remove
+ * body: { server: "<serverName>" }
+ * Admin-only. Removes server from user's access list.
+ */
+app.post("/api/settings/accounts/:email/remove", (req, res) => {
+  if (!isAdmin(req)) return res.status(403).json({ error: "not authorized" });
+  const encoded = req.params.email || "";
+  let email;
+  try { email = decodeURIComponent(encoded); } catch (e) { email = encoded; }
+  const server = req.body && req.body.server ? String(req.body.server) : "";
+  if (!email || !server) return res.status(400).json({ error: "missing email or server" });
+
+  try {
+    const ok = removeAccessForEmail(email, server);
+    if (!ok) return res.status(500).json({ error: "failed to save access" });
+    return res.json({ ok: true });
+  } catch (e) {
+    console.error("Failed to remove access:", e);
+    return res.status(500).json({ error: "failed to remove access" });
+  }
+});
+
+/* -------------------- Create / Rename / Explore ... -------------------- */
+
+app.post("/create", (req, res) => {
+  const { bot, type, name, path: relPath } = req.body || {};
+  if (!bot || !type || !name) return res.status(400).send("Missing fields");
+  const safeName = String(name).trim();
+  if (safeName === "" || safeName.includes("..") || safeName.includes("/") || safeName.includes("\\")) {
+    return res.status(400).send("Invalid name");
+  }
+  if (type !== "file" && type !== "folder") return res.status(400).send("Invalid type");
+
+  const base = path.resolve(BOTS_DIR);
+  const destDir = relPath ? path.join(BOTS_DIR, bot, relPath) : path.join(BOTS_DIR, bot);
+  const resolvedDestDir = path.resolve(destDir);
+  if (!resolvedDestDir.startsWith(base + path.sep) && resolvedDestDir !== base) {
+    return res.status(400).send("Invalid path");
+  }
+
+  try {
+    fs.mkdirSync(resolvedDestDir, { recursive: true });
+    if (type === "folder") {
+      const folderPath = path.join(resolvedDestDir, safeName);
+      const resolvedFolder = path.resolve(folderPath);
+      if (!resolvedFolder.startsWith(base + path.sep)) return res.status(400).send("Invalid folder path");
+      if (!fs.existsSync(resolvedFolder)) fs.mkdirSync(resolvedFolder, { recursive: true });
+      return res.status(200).send("Folder created");
+    } else {
+      const filePath = path.join(resolvedDestDir, safeName);
+      const resolvedFile = path.resolve(filePath);
+      if (!resolvedFile.startsWith(base + path.sep)) return res.status(400).send("Invalid file path");
+      if (!fs.existsSync(resolvedFile)) fs.writeFileSync(resolvedFile, "", "utf8");
+      return res.status(200).send("File created");
+    }
+  } catch (e) {
+    console.error("Create failed:", e);
+    return res.status(500).send("Error creating " + type);
+  }
+});
+
+app.post("/rename", (req, res) => {
+  const { bot, oldPath, newName } = req.body || {};
+  if (!bot || !oldPath || !newName) return res.status(400).send("Missing fields");
+  const safeNewName = String(newName).trim();
+  if (safeNewName === "" || safeNewName.includes("..") || safeNewName.includes("/") || safeNewName.includes("\\")) {
+    return res.status(400).send("Invalid new name");
+  }
+  const base = path.resolve(BOTS_DIR);
+  const oldFull = path.resolve(path.join(BOTS_DIR, bot, oldPath));
+  if (!oldFull.startsWith(base + path.sep) && oldFull !== base) return res.status(400).send("Invalid path");
+  if (!fs.existsSync(oldFull)) return res.status(404).send("Not found");
+
+  const dir = path.dirname(oldFull);
+  const newFull = path.resolve(path.join(dir, safeNewName));
+  if (!newFull.startsWith(base + path.sep)) return res.status(400).send("Invalid new path");
+
+  try {
+    fs.renameSync(oldFull, newFull);
+    return res.status(200).send("Renamed");
+  } catch (e) {
+    console.error("Rename failed:", e);
+    return res.status(500).send("Rename failed");
+  }
+});
 
 app.get("/bot/:bot", (req, res) => {
-  const botDir = path.join(BOTS_DIR, req.params.bot);
+  const botName = req.params.bot;
+  const botDir = path.join(BOTS_DIR, botName);
   if (!fs.existsSync(botDir)) return res.redirect("/");
+
+  if (!isAdmin(req)) {
+    if (!userHasAccessToServer(req.session.user, botName)) return res.redirect("/");
+  }
+
   res.render("bot", {
-    bot: req.params.bot,
+    bot: botName,
     nodeVersions,
   });
 });
@@ -387,7 +823,7 @@ app.get("/explore/:bot", (req, res) => {
   res.json({ path: rel, entries });
 });
 
-/* Process management and websockets */
+/* -------------------- Sockets & Processes -------------------- */
 
 const LOG_BUFFER_SIZE = 500;
 const buffers = {};
