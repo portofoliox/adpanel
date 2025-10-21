@@ -54,16 +54,7 @@
       <button class="upload">Upload ZIP</button>
     </form>
 
-    <div class="list">
-      <% bots.forEach(function(bot){ %>
-        <div class="server-box" onclick="location.href='/bot/<%= bot %>'">
-          <div class="server-header">
-            <span class="server-icon" style="color: #b9bbbb;"><i class="fa-solid fa-server"></i></span>
-            <span class="server-name"><%= bot %></span>
-          </div>
-
-          <!-- settings button (only shown when user is admin) -->
-        </div>
+            </div>
 
         <div class="pet"></div>
         <div>
@@ -72,8 +63,17 @@
         <div>
           <a class="start-description">Create your server</a>
         </div>
-      <% }) %>
     </div>
+
+    <div class="list">
+      <% bots.forEach(function(bot){ %>
+        <div class="server-box" onclick="location.href='/bot/<%= bot %>'">
+          <div class="server-header">
+            <span class="server-icon" style="color: #b9bbbb;"><i class="fa-solid fa-server"></i></span>
+            <span class="server-name"><%= bot %></span>
+                  <% }) %>
+          </div>
+
     <div>
               <% if (isAdmin) { %>
 <button class="settings" title="Settings" onclick="event.stopPropagation(); location.href='/settings'" style="background: none; border: none; padding: 0; cursor: pointer; background-color: #252733;">
