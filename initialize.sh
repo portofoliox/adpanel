@@ -20,6 +20,22 @@ read -p "Enter choice (1, 2, 3 or 4): " CHOICE
 
 USER_FILE="./user.json"
 
+# ----------------- HELPER FUNCTIONS -----------------
+install_dependencies() {
+  echo -e "${CYAN}Installing dependencies...${NC}"
+  npm install adm-zip express-session speakeasy qrcode bcryptjs express-rate-limit qrcode-terminal tar
+}
+
+# Node.js code to load bcrypt with fallback
+BCRYPT_CODE="
+let bcrypt;
+try { bcrypt = require('bcrypt'); } catch (e) { 
+  console.log('Using bcryptjs fallback'); 
+  bcrypt = require('bcryptjs'); 
+}
+module.exports = bcrypt;
+"
+
 # ----------------- CHANGE ADMIN PASSWORD -----------------
 change_password() {
   if [ ! -f "$USER_FILE" ]; then
@@ -32,10 +48,10 @@ change_password() {
     read -s -p "Enter current password: " CURRENT
     echo ""
     VALID=$(node -e "
-      const bcrypt = require('bcrypt');
       const fs = require('fs');
-      const user = JSON.parse(fs.readFileSync('$USER_FILE'));
-      bcrypt.compareSync('$CURRENT', user.password) ? console.log('true') : console.log('false');
+      const bcrypt = require('bcryptjs');
+      const user = JSON.parse(fs.readFileSync('$USER_FILE'))[0];
+      console.log(bcrypt.compareSync('$CURRENT', user.password));
     ")
     if [ "$VALID" == "true" ]; then
       break
@@ -62,14 +78,13 @@ change_password() {
   done
 
   HASH=$(node -e "
-    const bcrypt = require('bcrypt');
-    const hash = bcrypt.hashSync('$NEW1', 10);
-    console.log(hash);
+    const bcrypt = require('bcryptjs');
+    console.log(bcrypt.hashSync('$NEW1', 10));
   ")
   node -e "
     const fs = require('fs');
     const user = JSON.parse(fs.readFileSync('$USER_FILE'));
-    user.password = '$HASH';
+    user[0].password = '$HASH';
     fs.writeFileSync('$USER_FILE', JSON.stringify(user, null, 2));
   "
 
@@ -89,10 +104,10 @@ delete_user() {
     read -s -p "Enter current password to confirm deletion: " CURRENT
     echo ""
     VALID=$(node -e "
-      const bcrypt = require('bcrypt');
       const fs = require('fs');
-      const user = JSON.parse(fs.readFileSync('$USER_FILE'));
-      bcrypt.compareSync('$CURRENT', user.password) ? console.log('true') : console.log('false');
+      const bcrypt = require('bcryptjs');
+      const user = JSON.parse(fs.readFileSync('$USER_FILE'))[0];
+      console.log(bcrypt.compareSync('$CURRENT', user.password));
     ")
     if [ "$VALID" == "true" ]; then
       rm -f "$USER_FILE"
@@ -117,8 +132,7 @@ initialize_panel() {
   read -s -p "Enter admin password: " PASSWORD
   echo ""
 
-  echo -e "${CYAN}Installing dependencies...${NC}"
-  npm install adm-zip express-session speakeasy qrcode bcrypt express-rate-limit qrcode-terminal tar
+  install_dependencies
 
   SECRET=$(node -e "
     const speakeasy = require('speakeasy');
@@ -140,17 +154,19 @@ initialize_panel() {
   "
 
   HASH=$(node -e "
-    const bcrypt = require('bcrypt');
-    const hash = bcrypt.hashSync('$PASSWORD', 10);
-    console.log(hash);
+    const bcrypt = require('bcryptjs');
+    console.log(bcrypt.hashSync('$PASSWORD', 10));
   ")
 
   cat <<EOF > "$USER_FILE"
-{
-  "email": "$EMAIL",
-  "password": "$HASH",
-  "secret": "$SECRET"
-}
+[
+  {
+    "email": "$EMAIL",
+    "password": "$HASH",
+    "secret": "$SECRET",
+    "admin": true
+  }
+]
 EOF
 
   echo -e "${GREEN}Admin account created and saved in user.json${NC}"
@@ -199,9 +215,8 @@ create_user() {
   "
 
   HASH=$(node -e "
-    const bcrypt = require('bcrypt');
-    const hash = bcrypt.hashSync('$PASS1', 10);
-    console.log(hash);
+    const bcrypt = require('bcryptjs');
+    console.log(bcrypt.hashSync('$PASS1', 10));
   ")
 
   node -e "

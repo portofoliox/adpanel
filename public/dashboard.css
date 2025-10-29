@@ -6,7 +6,7 @@
 
 body {
   font-family: sans-serif;
-  background: url("https://raw.githubusercontent.com/BridgeHosting/manelemp3/refs/heads/main/manele/sunset-scenery-minimalist-digital-art-8k-wallpaper-uhdpaper.com-172%405%40b.webp") center/cover no-repeat;
+  background: url("https://images.hdqwalls.com/wallpapers/waves-digital-art-4k-m8.jpg") center/cover no-repeat;
   color: #abb2bf;
   padding: 20px;
 }
@@ -126,6 +126,26 @@ h1.title {
 
 .server-icon {
   font-size: 20px;
+}
+
+#logoutBtn {
+ position: absolute;
+ left: 93%;
+ top: 17px;
+ background: none;
+ border: none;
+ padding: 0;
+ cursor: pointer;
+ font-size: 30px;
+ color: red;
+
+ display: flex;
+ justify-content: center;
+ align-items: center;
+}
+
+#logoutBtn:hover {
+  color: #CF4444;
 }
 
 .settings {

@@ -6,8 +6,21 @@ const AdmZip = require("adm-zip");
 const multer = require("multer");
 const { spawn } = require("child_process");
 const session = require("express-session");
-const bcrypt = require("bcrypt");
-const speakeasy = require("speakeasy");
+let bcrypt;
+try {
+    bcrypt = require('bcrypt'); // încearcă varianta nativă
+} catch (e) {
+    console.log('Detected termux environment... Installing BcryptJS');
+    bcrypt = require('bcryptjs'); // fallback
+}
+
+let speakeasy;
+try {
+    speakeasy = require('speakeasy');
+} catch (e) {
+    console.log('Speakeasy is not installed correctly...');
+    process.exit(1);
+}
 const tar = require("tar");
 
 const app = express();
