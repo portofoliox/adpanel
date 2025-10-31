@@ -2,8 +2,8 @@
 **A powerful, easy-to-use panel for Termux or any Linux OS to run your Discord bots right from your phone!**
 
 <p align="center">
-  <img src="https://files.catbox.moe/1m6ydq.png" alt="ADPanel preview" width="400"/>
-  <img src="https://files.catbox.moe/7u7x5b.png" alt="ADPanel preview" width="400"/>
+  <img src="https://files.catbox.moe/1m6ydq.png" alt="ADPanel preview" width="600"/>
+  <img src="https://files.catbox.moe/7u7x5b.png" alt="ADPanel preview" width="600"/>
 </p>
 
 ---
