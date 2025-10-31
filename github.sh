@@ -15,6 +15,7 @@ git add .
 
 # Commit cu mesaj
 git commit -m "Initial commit"
+git pull --no-rebase
 
 # Push către remote origin pe branch-ul main și setează upstream
 git push --set-upstream origin main

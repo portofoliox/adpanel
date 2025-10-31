@@ -1,95 +1,200 @@
 <!DOCTYPE html>
-<html>
+<html lang="ro">
   <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="dashboard.css">
     <title>ADPanel</title>
-    <link id="favicon" rel="icon" type="image/png" href="/images/adpanel-dark.png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.7.2/css/all.css">
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Bitcount:wght@100..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/dashboard.css">
-    <style>
-      #splash-screen {
-        position: fixed;
-        top: 0; left: 0;
-        width: 100vw;
-        height: 100vh;
-        background: url('https://files.catbox.moe/6yav8u.png') center/contain no-repeat;
-        background-color: #111;
-        background-size: cover;
-        z-index: 9999;
-        opacity: 1;
-        transition: opacity 1s ease;
-      }
-      #splash-screen.hidden {
-        opacity: 0;
-        pointer-events: none;
-      }
-
-      /* small style tweak so settings button doesn't overlay weirdly */
-      .server-box { position: relative; }
-      .settings {
-        position: absolute;
-        right: 12px;
-        top: 12px;
-        background: rgba(0,0,0,0.45);
-        border: none;
-        padding: 8px;
-        border-radius: 8px;
-        color: #fff;
-        cursor: pointer;
-      }
-    </style>
+    <link id="favicon" rel="icon" type="image/png" href="/images/adpanel-dark.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.cdnfonts.com/css/gg-sans-2" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="https://site-assets.fontawesome.com/releases/v6.7.2/css/all.css" />
   </head>
   <body>
     <div id="splash-screen"></div>
 
-    <h1 class="title"><a href="/" style="text-decoration: none; color: white;">ADPanel</a></h1>
+    <svg xmlns="http://www.w3.org/2000/svg" style="position: absolute; width:0; height:0; pointer-events:none;">
+      <defs>
+        <filter id="glass-distortion" x="0%" y="0%" width="100%" height="100%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.008 0.008" numOctaves="2" seed="92" result="noise" />
+          <feGaussianBlur in="noise" stdDeviation="2" result="blurred" />
+          <feDisplacementMap in="SourceGraphic" in2="blurred" scale="77" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+      </defs>
+    </svg>
 
-    <form class="upload-form" action="/upload" method="POST" enctype="multipart/form-data">
-      <input type="file" name="file" accept=".zip" required>
-      <button class="upload">Upload ZIP</button>
-    </form>
-
-            </div>
-
-        <div class="pet"></div>
-        <div>
-          <a class="start">Let's get started</a>
+    <header class="top-bar" id="topBar">
+      <div class="brand">
+        <img src="/images/adpanel-dark.png" alt="ADPanel logo" class="brand-logo" />
+        <div class="brand-copy">
+          <h1 class="brand-title">ADPanel</h1>
+          <p class="brand-subtitle">Smart control for your Discord bots</p>
         </div>
-        <div>
-          <a class="start-description">Create your server</a>
-        </div>
-    </div>
+      </div>
 
-    <div class="list">
-      <% bots.forEach(function(bot){ %>
-        <div class="server-box" onclick="location.href='/bot/<%= bot %>'">
-          <div class="server-header">
-            <span class="server-icon" style="color: #b9bbbb;"><i class="fa-solid fa-server"></i></span>
-            <span class="server-name"><%= bot %></span>
-                  <% }) %>
+      <div class="toolbar">
+        <div class="upload-form">
+          <form action="/upload" method="POST" enctype="multipart/form-data" class="upload-form__form">
+            <label class="upload-form__label" for="uploadInput">
+              <i class="fa-solid fa-upload"></i>
+              <span>Upload ZIP</span>
+            </label>
+            <input id="uploadInput" type="file" name="file" accept=".zip" required />
+            <button type="submit" class="upload-form__submit">Deploy</button>
+          </form>
+        </div>
+
+        <div class="toolbar-actions">
+          <% if (isAdmin) { %>
+          <button class="icon-button" title="Settings" onclick="location.href='/settings'">
+            <i class="fa-solid fa-bars"></i>
+          </button>
+          <% } else { %>
+          <button class="icon-button" title="You are not admin" disabled>
+            <i class="fa-solid fa-lock"></i>
+          </button>
+          <% } %>
+          <button id="logoutBtn" class="icon-butt" title="Log Out">
+            <i class="fa-solid fa-right-from-bracket"></i>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- spacer to preserve layout when header is fixed -->
+    <div id="topbar-spacer" aria-hidden="true"></div>
+
+    <main class="dashboard" id="mainContent">
+      <section class="hero">
+        <div class="hero-copy">
+          <h2>Welcome back!</h2>
+          <p>
+            Monitor, deploy, and orchestrate Discord bots with ease. Launch new experiences for your community in
+            seconds.
+          </p>
+
+          <div class="hero-actions">
+            <button class="pills" data-scroll-target="bots">View Bots</button>
+            <button class="pill pill--outline" data-scroll-target="upload">Quick Deploy</button>
           </div>
+        </div>
 
-<div>
-  <% if (isAdmin) { %>
-    <button class="settings" title="Settings" onclick="event.stopPropagation(); location.href='/settings'" style="background: none; border: none; padding: 0; cursor: pointer; background-color: #252733;">
-      <i class="fa-solid fa-square-sliders"></i>
-    </button>
-  <% } else { %>
-    <button class="settings" title="You are not admin" disabled style="background: none; border: none; padding: 0; cursor: not-allowed; opacity: 0.5; background-color: #252733;">
-      <i class="fa-solid fa-lock"></i>
-    </button>
-    <button id="logoutBtn" onclick="logoutBtn()" title="Log Out"><i class="fa-solid fa-right-from-bracket"></i></button>
-  <% } %>
-</div>
+        <div class="hero-stats">
+          <article class="stat-card">
+            <div class="stat-card__icon stat-card__icon--active">
+              <i class="fa-solid fa-server"></i>
+            </div>
+            <div class="stat-card__content">
+              <p class="stat-card__label">Active bots</p>
+              <p class="stat-card__value"><%= bots.length %></p>
+            </div>
+          </article>
+
+          <article class="stat-card">
+            <div class="stat-card__icon stat-card__icon--uptime">
+              <i class="fa-solid fa-signal-bars"></i>
+            </div>
+            <div class="stat-card__content">
+              <p class="stat-card__label">Status</p>
+              <p class="stat-card__value">Operational</p>
+            </div>
+          </article>
+
+          <article class="stat-card">
+            <div class="stat-card__icon stat-card__icon--deploy">
+              <i class="fa-solid fa-clock-three"></i>
+            </div>
+            <div class="stat-card__content">
+              <p class="stat-card__label">Server Uptime</p>
+              <p class="stat-card__value" id="uptimeDisplay">0s</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="quick-actions" aria-label="Quick actions">
+        <h3>Quick actions</h3>
+        <div class="quick-actions__grid">
+          <button class="quick-action" onclick="window.location.href='/settings?panel=account'">
+            <i class="fa-solid fa-list-check"></i>
+            <p style="font-family: 'gg sans', sans-serif; font-size: 15px; line-height: 1.4;">Manage Account</p>
+          </button>
+          <button class="quick-action" onclick="window.location.href='/settings?panel=servers'">
+            <i class="fa-solid fa-bars-progress"></i>
+            <p style="font-family: 'gg sans', sans-serif; font-size: 15px; line-height: 1.4;">Manage servers</p>
+          </button>
+          <button class="quick-action" onclick="window.open('https://discord.com/developers/applications', '_blank')">
+            <i class="fa-brands fa-discord"></i>
+            <p style="font-family: 'gg sans', sans-serif; font-size: 15px; line-height: 1.4;">Discord Portal</p>
+          </button>
+        </div>
+      </section>
+
+      <section class="bots" id="bots">
+        <div class="section-heading">
+          <div>
+            <h3>Your bots</h3>
+            <p>Browse and jump straight into any bot workspace.</p>
+          </div>
+          <div class="section-actions">
+            <label for="searchBots" class="search-field">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input id="searchBots" class="search-servers" type="text" placeholder="Search servers" />
+            </label>
+          </div>
+        </div>
+
+        <div class="bot-grid" data-bot-grid>
+          <% bots.forEach(function(bot){ %>
+          <article class="bot-card" data-bot-card data-name="<%= bot.toLowerCase() %>" onclick="location.href='/bot/<%= bot %>'">
+            <div class="bot-card__icon">
+              <i class="fa-solid fa-server"></i>
+            </div>
+            <div class="bot-card__body">
+              <h4><%= bot %></h4>
+              <p>Manage configuration, logs and deployments.</p>
+            </div>
+            <i class="fa-solid fa-arrow-right bot-card__chevron"></i>
+          </article>
+          <% }) %>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer" id="upload">
+      <div class="footer-inner">
+        <div class="footer-copy">
+          <h3>Need to ship a new bot?</h3>
+          <p>Upload a ZIP package and ADPanel will take care of unpacking and launching it.</p>
+        </div>
+        <form class="footer-upload" action="/upload" method="POST" enctype="multipart/form-data">
+          <label class="footer-upload__label" for="footerUpload">
+            <i class="fa-solid fa-folder-open"></i>
+            <span>Select ZIP</span>
+          </label>
+          <input id="footerUpload" type="file" name="file" accept=".zip" required />
+          <button type="submit" class="footer-upload__submit" style="font-family: sans-serif;">Upload &amp; Deploy</button>
+        </form>
+      </div>
+    </footer>
+
+    <template id="empty-state">
+      <div class="empty-state">
+        <i class="fa-solid fa-sparkles empty-state__icon"></i>
+        <h4>No bots found</h4>
+        <p>Try adjusting your search or deploy a new bot package.</p>
+      </div>
+    </template>
 
     <script>
       const darkFavicon = '/images/adpanel-white.png';
       const lightFavicon = '/images/adpanel-dark.png';
+
       function updateIcons() {
         const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
         document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach(el => el.remove());
@@ -99,43 +204,217 @@
         linkFavicon.href = isDark ? darkFavicon : lightFavicon;
         document.head.appendChild(linkFavicon);
       }
+
       updateIcons();
       window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateIcons);
 
       window.addEventListener('DOMContentLoaded', () => {
         const splash = document.getElementById('splash-screen');
         if (!localStorage.getItem('seenSplash')) {
-          const displayTime = 5000;
+          const displayTime = 3500;
           setTimeout(() => {
             splash.classList.add('hidden');
-            setTimeout(() => splash.remove(), 1000);
+            setTimeout(() => splash.remove(), 600);
           }, displayTime);
           localStorage.setItem('seenSplash', 'true');
         } else {
           splash.remove();
         }
+
+        document.querySelectorAll('[data-scroll-target]').forEach(button => {
+          button.addEventListener('click', () => {
+            const targetId = button.getAttribute('data-scroll-target');
+            const section = document.getElementById(targetId);
+            if (section) {
+              section.scrollIntoView({ behavior: 'smooth' });
+            }
+          });
+        });
+
+        const searchInput = document.getElementById('searchBots');
+        const botGrid = document.querySelector('[data-bot-grid]');
+        const emptyStateTemplate = document.getElementById('empty-state');
+
+        function updateBotVisibility() {
+          const term = searchInput.value.trim().toLowerCase();
+          const botCards = Array.from(botGrid.querySelectorAll('[data-bot-card]'));
+          let visibleCount = 0;
+
+          botCards.forEach(card => {
+            const name = card.getAttribute('data-name');
+            const matches = !term || name.includes(term);
+            card.classList.toggle('is-hidden', !matches);
+            if (matches) visibleCount += 1;
+          });
+
+          const existingEmptyState = botGrid.querySelector('.empty-state');
+          if (visibleCount === 0) {
+            if (!existingEmptyState) {
+              const clone = emptyStateTemplate.content.cloneNode(true);
+              botGrid.appendChild(clone);
+            }
+          } else if (existingEmptyState) {
+            existingEmptyState.remove();
+          }
+        }
+
+        searchInput.addEventListener('input', updateBotVisibility);
+        updateBotVisibility();
+
+        // --- TOP BAR fixed spacer and improved scroll animations ---
+        const topBar = document.getElementById('topBar');
+        const spacer = document.getElementById('topbar-spacer');
+
+        // get the fully expanded natural height of the topBar
+        function measureExpandedHeight() {
+          // temporarily ensure compact class is removed so we measure expanded height
+          const hadCompact = topBar.classList.contains('top-bar--compact');
+          topBar.classList.remove('top-bar--compact');
+
+          // force layout and measure
+          const height = Math.ceil(topBar.getBoundingClientRect().height);
+
+          // restore compact state if needed
+          if (hadCompact) topBar.classList.add('top-bar--compact');
+          return height;
+        }
+
+        // set spacer to the expanded (max) topBar height so layout never collapses when topBar shrinks
+        let expandedHeight = measureExpandedHeight();
+        spacer.style.height = expandedHeight + 'px';
+
+        // update expandedHeight on resize (debounced with requestAnimationFrame)
+        let resizeRAF = null;
+        window.addEventListener('resize', () => {
+          if (resizeRAF) cancelAnimationFrame(resizeRAF);
+          resizeRAF = requestAnimationFrame(() => {
+            expandedHeight = measureExpandedHeight();
+            spacer.style.height = expandedHeight + 'px';
+          });
+        });
+
+        // ResizeObserver to keep spacer accurate if content inside topBar changes
+        const ro = new ResizeObserver(() => {
+          expandedHeight = measureExpandedHeight();
+          spacer.style.height = expandedHeight + 'px';
+        });
+        ro.observe(topBar);
+
+        // scroll behaviour: compact on small scroll, hide on scroll down, show on scroll up
+        let lastScrollY = window.scrollY || 0;
+        let ticking = false;
+        let pinnedTimeout = null;
+
+        function onScrollTick() {
+          const currentY = window.scrollY || 0;
+          const delta = currentY - lastScrollY;
+
+          // compact threshold (only visual compacting)
+          if (currentY > 36) {
+            topBar.classList.add('top-bar--compact');
+          } else {
+            topBar.classList.remove('top-bar--compact');
+          }
+
+          // if near top, always fully visible
+          if (currentY <= 24) {
+            topBar.classList.remove('top-bar--hidden');
+            topBar.classList.remove('top-bar--pinned');
+            lastScrollY = currentY;
+            ticking = false;
+            return;
+          }
+
+          // hide on scroll down (significant), show on scroll up
+          if (Math.abs(delta) > 4) {
+            if (delta > 0 && currentY > 120) {
+              // scrolling down
+              topBar.classList.add('top-bar--hidden');
+              topBar.classList.remove('top-bar--pinned');
+            } else if (delta < 0) {
+              // scrolling up
+              topBar.classList.remove('top-bar--hidden');
+              topBar.classList.add('top-bar--pinned');
+
+              // clear previous timeout and schedule remove pinned class so it doesn't stay forever
+              if (pinnedTimeout) clearTimeout(pinnedTimeout);
+              pinnedTimeout = setTimeout(() => {
+                topBar.classList.remove('top-bar--pinned');
+              }, 900);
+            }
+          }
+
+          lastScrollY = currentY;
+          ticking = false;
+        }
+
+        window.addEventListener('scroll', () => {
+          if (!ticking) {
+            requestAnimationFrame(onScrollTick);
+            ticking = true;
+          }
+        }, { passive: true });
+
+        // ensure topBar is visible on initial load if page not at top
+        if ((window.scrollY || 0) > 36) {
+          topBar.classList.add('top-bar--compact');
+        } else {
+          topBar.classList.remove('top-bar--compact');
+        }
+        topBar.classList.remove('top-bar--hidden');
+
+        // --- logout + cookie deletion (improved to try root & domain) ---
+        function deleteAllClientCookies() {
+          const cookies = document.cookie ? document.cookie.split('; ') : [];
+          for (const cookie of cookies) {
+            const eqPos = cookie.indexOf('=');
+            const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+            // try clearing common paths and host domain
+            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${location.hostname}`;
+            const domainParts = location.hostname.split('.');
+            // try parent domains
+            for (let i = 0; i < domainParts.length - 1; i++) {
+              const dom = '.' + domainParts.slice(i).join('.');
+              document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${dom}`;
+            }
+          }
+        }
+
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) {
+          logoutBtn.addEventListener('click', async (event) => {
+            event.preventDefault();
+            try {
+              deleteAllClientCookies();
+              await fetch('/logout', { method: 'POST', credentials: 'include' });
+              location.href = '/login';
+            } catch (err) {
+              console.error(err);
+              alert('Failed to log out');
+            }
+          });
+        }
       });
 
-    function deleteAllClientCookies() {
-      const cookies = document.cookie.split("; ");
-      for (const cookie of cookies) {
-        const eqPos = cookie.indexOf("=");
-        const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
-        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
-      }
-    }
+  const serverStartTime = <%= serverStartTime %>; // primit de la server
+  const uptimeDisplay = document.getElementById('uptimeDisplay');
 
-    document.getElementById("logoutBtn").addEventListener("click", async () => {
-      try {
-        deleteAllClientCookies();
-        await fetch('/logout', { method: 'POST', credentials: 'include' });
-        location.href = '/login';
-      } catch (err) {
-        console.error(err);
-        alert('Failed to log out');
-      }
-    });
+  function formatTime(ms) {
+    const totalSeconds = Math.floor(ms / 1000);
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${hours}h ${minutes}m ${seconds}s`;
+  }
+
+  function updateUptime() {
+    const now = Date.now();
+    uptimeDisplay.textContent = formatTime(now - serverStartTime);
+  }
+
+  setInterval(updateUptime, 1000);
+  updateUptime();
     </script>
-
   </body>
 </html>

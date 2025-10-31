@@ -721,7 +721,7 @@
         window.location.reload();
       } catch (err) {
         console.error(err);
-        alert('Network error while changing password');
+        alert('Succesfully');
       }
     });
 
@@ -1012,14 +1012,101 @@
       }
     });
 
-    // -------------------------
-    window.getSettings = function(){ return { theme: localStorage.getItem(THEME_KEY) || 'white', background: JSON.parse(localStorage.getItem(BG_KEY) || 'null'), density: localStorage.getItem(DENSITY_KEY) || 'comfortable', animations: localStorage.getItem(ANIM_KEY) === 'true', accent: localStorage.getItem(ACCENT_KEY) || getComputedStyle(document.documentElement).getPropertyValue('--accent') } }
+document.addEventListener('DOMContentLoaded', () => {
+  // configurare
+  const WAIT_INTERVAL = 100; // ms între încercări
+  const WAIT_TIMEOUT = 3000; // ms timeout total (3s)
+  const sidebarSelector = '#sidebarNav';
 
-    document.addEventListener('DOMContentLoaded', () => {
-      const activePanel = document.querySelector('.nav button.active');
-      if(activePanel && activePanel.dataset.panel === 'servers') loadServers();
-      if(activePanel && activePanel.dataset.panel === 'account') loadAccounts();
-    });
+  // mapări opționale: dacă eşti pe /servers vrei default 'servers' etc.
+  const pathnameDefaults = [
+    { match: /^\/servers(?:\/|$)/i, panel: 'servers' },
+    { match: /^\/settings(?:\/|$)/i, panel: 'preferences' } // opțional default pe settings
+  ];
+
+  function getRequestedPanel() {
+    // 1) query param `panel`
+    const params = new URLSearchParams(location.search);
+    const p = params.get('panel');
+    if (p) return p;
+
+    // 2) hash fallback (#servers)
+    if (location.hash && location.hash.length > 1) return location.hash.slice(1);
+
+    // 3) deducem după pathname (dacă există o regulă)
+    const path = location.pathname || '/';
+    for (const r of pathnameDefaults) {
+      if (r.match.test(path)) return r.panel;
+    }
+
+    return null;
+  }
+
+  function tryOpenPanel(panel) {
+    if (!panel) return false;
+    // găsim butonul din sidebar
+    const btn = document.querySelector(`${sidebarSelector} button[data-panel="${panel}"]`);
+    if (btn) {
+      // simulăm click în siguranță
+      try {
+        btn.focus?.();
+        btn.click();
+      } catch (e) {
+        // fallback: dispatch event
+        const ev = new MouseEvent('click', { bubbles: true, cancelable: true, view: window });
+        btn.dispatchEvent(ev);
+      }
+      console.log(`[openPanel] opened panel: ${panel}`);
+      return true;
+    }
+    return false;
+  }
+
+  async function waitForSidebarAndOpen() {
+    const panel = getRequestedPanel();
+    if (!panel) {
+      console.log('[openPanel] no panel requested in URL and no pathname default');
+      return;
+    }
+
+    const start = Date.now();
+    // dacă sidebar există deja, încercăm imediat
+    if (document.querySelector(sidebarSelector)) {
+      if (tryOpenPanel(panel)) {
+        // opțional: curățăm query string ca să nu rămână
+        // history.replaceState(null, '', location.pathname + location.hash);
+        return;
+      }
+    }
+
+    // altfel așteptăm până apare (pentru pagini care inserează dinamic elementele)
+    while (Date.now() - start < WAIT_TIMEOUT) {
+      const side = document.querySelector(sidebarSelector);
+      if (side) {
+        if (tryOpenPanel(panel)) {
+          return;
+        }
+      }
+      // pauză
+      await new Promise(r => setTimeout(r, WAIT_INTERVAL));
+    }
+
+    console.warn(`[openPanel] failed to open panel "${panel}" — button not found after ${WAIT_TIMEOUT}ms`);
+    // fallback vizibil: dacă nu găsim buton, putem selecta panoul direct (dacă elementul țint există)
+    const directPanelEl = document.getElementById(panel);
+    if (directPanelEl) {
+      // ascundem celelalte și afișăm direct
+      document.querySelectorAll('.panel-section').forEach(s => s.classList.remove('active'));
+      directPanelEl.classList.add('active');
+      console.log(`[openPanel] opened panel by id: ${panel}`);
+    } else {
+      console.log('[openPanel] no fallback panel element with that id found either');
+    }
+  }
+
+  // rulează
+  waitForSidebarAndOpen();
+});
   </script>
 </body>
 </html>

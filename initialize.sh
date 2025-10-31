@@ -23,7 +23,7 @@ USER_FILE="./user.json"
 # ----------------- HELPER FUNCTIONS -----------------
 install_dependencies() {
   echo -e "${CYAN}Installing dependencies...${NC}"
-  npm install adm-zip express-session speakeasy qrcode bcryptjs express-rate-limit qrcode-terminal tar
+  npm install adm-zip express-session speakeasy qrcode bcryptjs express-rate-limit qrcode-terminal tar bcrypt
 }
 
 # Node.js code to load bcrypt with fallback

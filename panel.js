@@ -44,6 +44,7 @@ const nodeVersions = ["14", "16", "18", "20"];
 });
 
 const USERS_FILE = path.join(__dirname, "user.json");
+let userCount = 0;
 
 /* -------------------- Ensure user-access.json exists (non-destructive) -------------------- */
 try {
@@ -351,6 +352,48 @@ app.get("/login", (req, res) => {
   res.render("login", { error: null });
 });
 
+const SERVER_START = Date.now();
+
+let USER_COUNT_CACHE = 0;
+function loadUserCount() {
+  try {
+    if (!fs.existsSync(USERS_FILE)) return 0;
+    const raw = fs.readFileSync(USERS_FILE, "utf8").trim();
+    if (!raw) return 0;
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) return parsed.length;
+    if (typeof parsed === "object" && parsed !== null) return Object.keys(parsed).length;
+    return 0;
+  } catch (e) {
+    console.warn("[user-count] loadUserCount failed:", e && e.message);
+    return 0;
+  }
+}
+USER_COUNT_CACHE = loadUserCount();
+
+// watch for changes to user.json and update cache (debounced)
+try {
+  let lastSeen = Date.now();
+  fs.watchFile(USERS_FILE, { interval: 1000 }, (curr, prev) => {
+    const now = Date.now();
+    // avoid noisy double-calls
+    if (now - lastSeen < 800) return;
+    lastSeen = now;
+    const newCount = loadUserCount();
+    if (newCount !== USER_COUNT_CACHE) {
+      USER_COUNT_CACHE = newCount;
+      console.log("[user-count] updated to", USER_COUNT_CACHE);
+    }
+  });
+} catch (e) {
+  console.warn("[user-count] fs.watchFile failed:", e && e.message);
+}
+
+// API mic pentru user count
+app.get("/api/usercount", (req, res) => {
+  return res.json({ userCount: USER_COUNT_CACHE });
+});
+
 app.get("/register", (req, res) => {
   const secret = speakeasy.generateSecret({ length: 20 });
   req.session.secret = secret.base32;
@@ -489,7 +532,7 @@ app.get("/", (req, res) => {
     }
   }
 
-  res.render("index", { bots: botsToShow, isAdmin: safeUser ? safeUser.admin : false, user: safeUser });
+  res.render("index", { bots: botsToShow, isAdmin: safeUser ? safeUser.admin : false, user: safeUser,   serverStartTime: SERVER_START });
 });
 
 app.get("/settings", (req, res) => {
@@ -633,6 +676,92 @@ app.get("/api/settings/servers", (req, res) => {
   }
 });
 
+// Admin: create server (POST) and delete server (DELETE)
+app.post("/api/settings/servers", (req, res) => {
+  if (!isAdmin(req)) return res.status(403).json({ error: "not authorized" });
+
+  const nameRaw = req.body && req.body.name ? String(req.body.name) : "";
+  const name = nameRaw.trim();
+  if (!name) return res.status(400).json({ error: "missing name" });
+
+  // basic validation: no traversal, no slashes/backslashes, reasonable length
+  if (name.includes("..") || /[\/\\]/.test(name) || name.length > 120) {
+    return res.status(400).json({ error: "invalid name" });
+  }
+
+  const base = path.resolve(BOTS_DIR);
+  const target = path.resolve(path.join(BOTS_DIR, name));
+  if (!target.startsWith(base + path.sep) && target !== base) {
+    return res.status(400).json({ error: "invalid path" });
+  }
+
+  try {
+    if (fs.existsSync(target)) {
+      return res.status(400).json({ error: "server already exists" });
+    }
+    fs.mkdirSync(target, { recursive: true });
+    console.log("[/api/settings/servers] Created server folder:", target);
+    return res.json({ ok: true, name });
+  } catch (e) {
+    console.error("[/api/settings/servers] create failed:", e && e.message);
+    return res.status(500).json({ error: "failed to create server folder" });
+  }
+});
+
+app.delete("/api/settings/servers/:name", (req, res) => {
+  if (!isAdmin(req)) return res.status(403).json({ error: "not authorized" });
+
+  let nameParam = req.params.name || "";
+  try { nameParam = decodeURIComponent(nameParam); } catch (e) { /* ignore */ }
+  const name = String(nameParam).trim();
+  if (!name) return res.status(400).json({ error: "missing name" });
+  if (name.includes("..") || /[\/\\]/.test(name)) return res.status(400).json({ error: "invalid name" });
+
+  const base = path.resolve(BOTS_DIR);
+  const target = path.resolve(path.join(BOTS_DIR, name));
+  if (!target.startsWith(base + path.sep) && target !== base) {
+    return res.status(400).json({ error: "invalid path" });
+  }
+
+  try {
+    if (!fs.existsSync(target)) return res.status(404).json({ error: "not found" });
+    const st = fs.statSync(target);
+    if (!st.isDirectory()) return res.status(400).json({ error: "not a directory" });
+
+    // Remove directory recursively
+    fs.rmSync(target, { recursive: true, force: true });
+    console.log("[/api/settings/servers] Deleted server folder:", target);
+
+    // CLEANUP: remove references from user-access.json if present (non-destructive)
+    try {
+      const access = loadUserAccess(); // uses helper already in panel.js
+      let changed = false;
+      const normalized = String(name);
+      const newAccess = (access || []).map(rec => {
+        if (!rec || !rec.email) return rec;
+        if (!Array.isArray(rec.servers)) return rec;
+        const filtered = rec.servers.filter(s => s !== normalized);
+        if (filtered.length !== rec.servers.length) {
+          changed = true;
+          return { ...rec, servers: filtered };
+        }
+        return rec;
+      });
+      if (changed) {
+        saveUserAccess(newAccess);
+        console.log("[/api/settings/servers] Removed server from user-access.json:", name);
+      }
+    } catch (e) {
+      console.warn("[/api/settings/servers] Failed to update user-access.json:", e && e.message);
+    }
+
+    return res.json({ ok: true });
+  } catch (e) {
+    console.error("[/api/settings/servers] delete failed:", e && e.message);
+    return res.status(500).json({ error: "failed to delete server folder" });
+  }
+});
+
 /**
  * GET /api/my-servers
  * Returns JSON { names: [<folder names>] } for the current user (non-admin users)
@@ -707,6 +836,7 @@ app.post("/api/settings/accounts/:email/add", (req, res) => {
   const server = req.body && req.body.server ? String(req.body.server) : "";
   if (!email || !server) return res.status(400).json({ error: "missing email or server" });
 
+  // validate server exists (optional, but safer)
   const allBots = fs.existsSync(BOTS_DIR) ? fs.readdirSync(BOTS_DIR, { withFileTypes: true }).filter(e => e.isDirectory()).map(d => d.name) : [];
   if (!allBots.includes(server) && server !== "all") {
     return res.status(400).json({ error: "server not found" });
@@ -808,6 +938,298 @@ app.post("/rename", (req, res) => {
     return res.status(500).send("Rename failed");
   }
 });
+
+/* -------------------- Extraction helpers -------------------- */
+
+/**
+ * Safe join: ensures resolved path stays inside baseDest.
+ * Returns resolved path or null if path would escape baseDest.
+ */
+function safeJoinAndCheck(dest, entryPath) {
+  const target = path.join(dest, entryPath);
+  const resolved = path.resolve(target);
+  const baseResolved = path.resolve(dest);
+  if (!resolved.startsWith(baseResolved + path.sep) && resolved !== baseResolved) {
+    return null;
+  }
+  return resolved;
+}
+
+async function extractZipFile(filePath, dest) {
+  return new Promise((resolve, reject) => {
+    try {
+      const zip = new AdmZip(filePath);
+      const entries = zip.getEntries();
+      for (const entry of entries) {
+        const entryName = entry.entryName;
+        if (!entryName || entryName.includes("..") || path.isAbsolute(entryName)) {
+          console.warn("[extractZip] Skipping unsafe zip entry:", entryName);
+          continue;
+        }
+        const outPath = safeJoinAndCheck(dest, entryName);
+        if (!outPath) {
+          console.warn("[extractZip] Skipping entry outside dest:", entryName);
+          continue;
+        }
+        if (entry.isDirectory) {
+          try { fs.mkdirSync(outPath, { recursive: true }); } catch (e) {}
+        } else {
+          try {
+            fs.mkdirSync(path.dirname(outPath), { recursive: true });
+            fs.writeFileSync(outPath, entry.getData());
+          } catch (e) {
+            console.error("[extractZip] Failed to write zip entry:", entryName, e);
+            return reject(e);
+          }
+        }
+      }
+      return resolve();
+    } catch (err) {
+      return reject(err);
+    }
+  });
+}
+
+async function extractTarFile(filePath, dest) {
+  return new Promise((resolve, reject) => {
+    tar.x({
+      file: filePath,
+      cwd: dest,
+      filter: (p, stat) => {
+        if (!p) return false;
+        if (p.includes("..")) {
+          console.warn("[extractTar] Skipping tar entry with .. :", p);
+          return false;
+        }
+        if (path.isAbsolute(p)) {
+          console.warn("[extractTar] Skipping absolute tar entry:", p);
+          return false;
+        }
+        return true;
+      },
+    }).then(() => resolve()).catch(err => reject(err));
+  });
+}
+
+async function extractWith7zOrUnrar(filePath, dest) {
+  return new Promise((resolve, reject) => {
+    const tryCommands = [
+      { cmd: "7z", args: ["x", filePath, `-o${dest}`, "-y"] },
+      { cmd: "7za", args: ["x", filePath, `-o${dest}`, "-y"] },
+      { cmd: "unrar", args: ["x", "-o+", filePath, dest] },
+      { cmd: "unar", args: ["-o", dest, filePath] },
+    ];
+
+    let tried = 0;
+    function attemptNext() {
+      if (tried >= tryCommands.length) {
+        return reject(new Error("No extractor found (7z/7za/unrar/unar)"));
+      }
+      const item = tryCommands[tried++];
+      const cp = spawn(item.cmd, item.args, { stdio: "inherit" });
+
+      cp.on("error", (err) => {
+        console.warn(`[extract7z] extractor ${item.cmd} failed to start:`, err && err.message);
+        attemptNext();
+      });
+      cp.on("close", (code) => {
+        if (code === 0) {
+          return resolve();
+        } else {
+          console.warn(`[extract7z] extractor ${item.cmd} exited with code ${code}, trying next...`);
+          attemptNext();
+        }
+      });
+    }
+
+    attemptNext();
+  });
+}
+
+/* -------------------- NEW: Upload route (dual behavior) -------------------- */
+/**
+ * POST /upload
+ * - If body/form includes `bot` (and optionally `path`): the uploaded file is moved into that bot folder (keeps filename), no extraction.
+ * - If `bot` is NOT provided: creates a new folder in ./bots named after the archive and extracts the archive there.
+ *
+ * Input: field 'file' (multipart), optional fields 'bot' and 'path'
+ */
+app.post("/upload", upload.single("file"), async (req, res) => {
+  // require authentication
+  if (!isAuthenticated(req)) {
+    // if classic form, redirect; if XHR, return 401
+    if (req.headers && req.headers.accept && req.headers.accept.includes("text/html")) {
+      return res.redirect("/login");
+    }
+    return res.status(401).json({ error: "Not authenticated" });
+  }
+
+  if (!req.file) {
+    if (req.headers && req.headers.accept && req.headers.accept.includes("text/html")) {
+      return res.redirect("/?upload=nofile");
+    }
+    return res.status(400).json({ error: "No file uploaded" });
+  }
+
+  const uploadedPath = req.file.path;
+  const originalName = req.file.originalname || "upload";
+  const lower = originalName.toLowerCase();
+
+  // If a bot is specified -> just move the uploaded file into that bot folder (optionally into subpath)
+  const bot = req.body && req.body.bot ? String(req.body.bot).trim() : "";
+  const relPath = req.body && typeof req.body.path !== "undefined" ? String(req.body.path).trim() : "";
+
+  if (bot) {
+    // validate bot name (no traversal)
+    if (bot.includes("..") || bot.includes("/") || bot.includes("\\")) {
+      try { fs.unlinkSync(uploadedPath); } catch (e) {}
+      return res.status(400).json({ error: "Invalid bot name" });
+    }
+
+    const base = path.resolve(BOTS_DIR);
+    const targetDir = relPath ? path.join(BOTS_DIR, bot, relPath) : path.join(BOTS_DIR, bot);
+    const resolvedTarget = path.resolve(targetDir);
+    if (!resolvedTarget.startsWith(base + path.sep) && resolvedTarget !== base) {
+      try { fs.unlinkSync(uploadedPath); } catch (e) {}
+      return res.status(400).json({ error: "Invalid path" });
+    }
+
+    try {
+      fs.mkdirSync(resolvedTarget, { recursive: true });
+      const safeFilename = String(originalName).replace(/[\r\n]/g, "_");
+      const destFile = path.join(resolvedTarget, safeFilename);
+      fs.renameSync(uploadedPath, destFile);
+      // success
+      if (req.headers && req.headers.accept && req.headers.accept.includes("text/html")) {
+        return res.redirect("/");
+      }
+      return res.json({ ok: true, msg: "Uploaded to bot folder", path: path.relative(BOTS_DIR, destFile) });
+    } catch (e) {
+      console.error("[upload->bot] Failed to move uploaded file:", e);
+      try { fs.unlinkSync(uploadedPath); } catch (e2) {}
+      return res.status(500).json({ error: "Failed to move uploaded file" });
+    }
+  }
+
+  // If no bot specified -> treat upload as "new package": create folder named after archive and extract inside
+  // compute base name (handle .tar.gz and .tgz specially)
+  let baseName;
+  if (lower.endsWith(".tar.gz")) {
+    baseName = originalName.slice(0, -7);
+  } else if (lower.endsWith(".tgz")) {
+    baseName = originalName.slice(0, -4);
+  } else {
+    baseName = originalName.replace(path.extname(originalName), "");
+  }
+
+  // sanitize folder name
+  let folderName = String(baseName).trim().replace(/\s+/g, "-").replace(/[^\w\-_.]/g, "").replace(/^-+|-+$/g, "");
+  if (!folderName) folderName = "uploaded-" + Date.now();
+
+  // ensure unique folder
+  let finalFolder = folderName;
+  let counter = 0;
+  while (fs.existsSync(path.join(BOTS_DIR, finalFolder))) {
+    counter++;
+    finalFolder = `${folderName}-${counter}`;
+    if (counter > 9999) break;
+  }
+  const destDir = path.join(BOTS_DIR, finalFolder);
+  try {
+    fs.mkdirSync(destDir, { recursive: true });
+  } catch (e) {
+    console.error("Failed to create dest folder for upload:", e);
+    try { fs.unlinkSync(uploadedPath); } catch (e2) {}
+    return res.status(500).json({ error: "Failed to create destination folder" });
+  }
+
+  // extract into destDir based on extension
+  let extractionError = null;
+  try {
+    if (lower.endsWith(".zip")) {
+      await extractZipFile(uploadedPath, destDir);
+    } else if (lower.endsWith(".tar.gz") || lower.endsWith(".tgz") || lower.endsWith(".tar")) {
+      await extractTarFile(uploadedPath, destDir);
+    } else if (lower.endsWith(".7z") || lower.endsWith(".rar")) {
+      await extractWith7zOrUnrar(uploadedPath, destDir);
+    } else {
+      extractionError = "Unsupported archive type. Supported: .zip, .tar.gz, .tgz, .tar, .7z, .rar";
+    }
+  } catch (err) {
+    console.error("[upload] Extraction failed:", err && (err.message || err));
+    extractionError = err && err.message ? err.message : String(err);
+  }
+
+  // remove uploaded temp file
+  try {
+    if (fs.existsSync(uploadedPath)) fs.unlinkSync(uploadedPath);
+  } catch (e) {
+    console.warn("[upload] Failed to remove uploaded temp file:", e && e.message);
+  }
+
+  if (extractionError) {
+    // cleanup destDir on failure
+    try {
+      fs.rmSync(destDir, { recursive: true, force: true });
+    } catch (e) {
+      console.warn("[upload] Failed to cleanup dest dir after error:", e && e.message);
+    }
+    if (req.headers && req.headers.accept && req.headers.accept.includes("text/html")) {
+      return res.redirect("/?upload=failed");
+    }
+    return res.status(400).json({ error: "Upload failed: " + extractionError });
+  }
+
+  // success
+  if (req.headers && req.headers.accept && req.headers.accept.includes("text/html")) {
+    return res.redirect("/");
+  }
+  return res.json({ ok: true, folder: finalFolder, msg: "Extracted to " + finalFolder });
+});
+
+/* -------------------- NEW: Extract endpoint for UI's "Unarchive" -------------------- */
+/**
+ * POST /extract
+ * body: { bot: "<botName>", path: "<relative/path/to/archive>" }
+ * Extracts the archive file present in BOTS_DIR/<bot>/<path> into the SAME directory where the archive is located.
+ */
+app.post("/extract", async (req, res) => {
+  if (!isAuthenticated(req)) return res.status(401).json({ error: "not authenticated" });
+
+  const { bot, path: relPath } = req.body || {};
+  if (!bot || !relPath) return res.status(400).json({ error: "missing bot or path" });
+
+  // sanitize and resolve
+  if (bot.includes("..") || bot.includes("/") || bot.includes("\\")) return res.status(400).json({ error: "Invalid bot" });
+
+  const base = path.resolve(BOTS_DIR);
+  const fileFull = path.resolve(path.join(BOTS_DIR, bot, relPath));
+  if (!fileFull.startsWith(base + path.sep) && fileFull !== base) return res.status(400).json({ error: "Invalid path" });
+  if (!fs.existsSync(fileFull)) return res.status(404).json({ error: "File not found" });
+  const stat = fs.statSync(fileFull);
+  if (!stat.isFile()) return res.status(400).json({ error: "Not a file" });
+
+  const fileLower = fileFull.toLowerCase();
+  const destDir = path.dirname(fileFull);
+
+  try {
+    if (fileLower.endsWith(".zip")) {
+      await extractZipFile(fileFull, destDir);
+    } else if (fileLower.endsWith(".tar.gz") || fileLower.endsWith(".tgz") || fileLower.endsWith(".tar")) {
+      await extractTarFile(fileFull, destDir);
+    } else if (fileLower.endsWith(".7z") || fileLower.endsWith(".rar")) {
+      await extractWith7zOrUnrar(fileFull, destDir);
+    } else {
+      return res.status(400).json({ error: "Unsupported archive type" });
+    }
+    return res.json({ ok: true, msg: "Extracted successfully" });
+  } catch (e) {
+    console.error("[extract] failed:", e && e.message);
+    return res.status(500).json({ error: "Extraction failed: " + (e && e.message ? e.message : String(e)) });
+  }
+});
+
+/* -------------------- END upload/extract implementation -------------------- */
 
 app.get("/bot/:bot", (req, res) => {
   const botName = req.params.bot;
@@ -956,7 +1378,7 @@ io.on("connection", (socket) => {
       pushBuffer(bot, `> ${command}\n`);
       io.to(bot).emit("output", `> ${command}\n`);
     } else {
-      socket.emit("output", "Procesul nu rulează sau nu poate primi comenzi.\n");
+      socket.emit("output", "The server is offline\n");
     }
   });
 });
