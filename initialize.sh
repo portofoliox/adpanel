@@ -20,13 +20,11 @@ read -p "Enter choice (1, 2, 3 or 4): " CHOICE
 
 USER_FILE="./user.json"
 
-# ----------------- HELPER FUNCTIONS -----------------
 install_dependencies() {
   echo -e "${CYAN}Installing dependencies...${NC}"
   npm install adm-zip express-session speakeasy qrcode bcryptjs express-rate-limit qrcode-terminal tar bcrypt
 }
 
-# Node.js code to load bcrypt with fallback
 BCRYPT_CODE="
 let bcrypt;
 try { bcrypt = require('bcrypt'); } catch (e) { 
@@ -36,7 +34,6 @@ try { bcrypt = require('bcrypt'); } catch (e) {
 module.exports = bcrypt;
 "
 
-# ----------------- CHANGE ADMIN PASSWORD -----------------
 change_password() {
   if [ ! -f "$USER_FILE" ]; then
     echo -e "${RED}Admin user not found! Initialize the panel first.${NC}"
@@ -92,7 +89,6 @@ change_password() {
   echo -e "${YELLOW}Please restart the panel for changes to take effect.${NC}"
 }
 
-# ----------------- DELETE ADMIN USER -----------------
 delete_user() {
   if [ ! -f "$USER_FILE" ]; then
     echo -e "${RED}No admin user found to delete.${NC}"
@@ -124,7 +120,6 @@ delete_user() {
   done
 }
 
-# ----------------- INITIALIZE PANEL -----------------
 initialize_panel() {
   echo -e "${CYAN}=== Panel Initialization ===${NC}"
 
@@ -176,7 +171,6 @@ EOF
   echo -e "${GREEN}Panel running.${NC}"
 }
 
-# ----------------- CREATE USER -----------------
 create_user() {
   echo -e "${CYAN}=== Create New User ===${NC}"
 
@@ -244,7 +238,6 @@ create_user() {
   echo -e "${GREEN}User created successfully! Take your journey!${NC}"
 }
 
-# ----------------- EXECUTE CHOICE -----------------
 if [ "$CHOICE" == "1" ]; then
   initialize_panel
 elif [ "$CHOICE" == "2" ]; then

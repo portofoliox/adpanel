@@ -3,164 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="settings.css">
   <title>ADPanel Settings</title>
   <link rel="icon" type="image/png" sizes="16x16" href="/images/adpanel-white.png">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-    /* (unchanged CSS from your original file) */
-    :root{
-      --accent: #4f46e5;
-      --bg: #f3f4f6;
-      --settings-bg: #e9edf2;
-      --panel-gray: #282c34;
-      --glass: rgba(255,255,255,0.6);
-      --radius: 12px;
-      --shadow: 0 8px 30px rgba(16,24,40,0.12);
-      --muted: #6b7280;
-      --text: #0f172a;
-      --btn-grad: linear-gradient(90deg, rgba(255,255,255,0.96), rgba(245,247,255,0.96));
-      --btn-color: #071232;
-      --card-contrast-bg: rgba(255,255,255,0.85);
-      --modal-bg: #d7dee6;
-      --hover-border: rgba(15,23,42,0.08);
-      --gap: 24px;
-    }
-    [data-theme="dark"]{
-      --accent: #7c3aed;
-      --bg: linear-gradient(180deg,#282c34 0%, #33383f 100%);
-      --settings-bg: rgba(30,36,40,0.92);
-      --panel-gray: #282c34;
-      --glass: rgba(255,255,255,0.03);
-      --shadow: 0 10px 30px rgba(2,6,23,0.6);
-      --muted: #9ca3af;
-      --text: #e6eef8;
-      --btn-grad: linear-gradient(90deg, rgba(40,44,50,0.92), rgba(48,52,58,0.94));
-      --btn-color: #e6eef8;
-      --card-contrast-bg: rgba(0,0,0,0.45);
-      --modal-bg: rgba(18,20,22,0.96);
-      --hover-border: rgba(255,255,255,0.07);
-    }
-    body.compact { --gap: 12px; }
-    body.no-animations * { transition: none !important; animation: none !important; }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
-      background: var(--bg);
-      color:var(--text);
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
-      padding:20px;
-      transition:background .45s ease,color .35s ease;
-    }
-    .theme-overlay{position:fixed;inset:0;z-index:9998;pointer-events:none;opacity:0;transition:opacity .28s ease;background:linear-gradient(135deg, rgba(255,255,255,0.03), rgba(0,0,0,0.04));}
-    .theme-overlay.show{opacity:1}
-    .app{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:260px 1fr;gap:var(--gap);align-items:start}
-    .sidebar{
-      background:linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.5));
-      border-radius:12px;
-      padding:12px;
-      box-shadow:var(--shadow);
-      position:sticky;
-      top:18px;
-      height:auto;
-      max-height: calc(100vh - 36px);
-      overflow:auto;
-      display:flex;
-      flex-direction:column;
-      gap:12px;
-    }
-    [data-theme="dark"] .sidebar{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));}
-    .brand{display:flex;align-items:center;gap:12px;margin-bottom:6px;flex:0 0 auto}
-    .brand .logo{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--panel-gray);color:#fff;font-weight:700;font-size:18px;box-shadow:0 6px 18px rgba(40,44,52,0.12)}
-    .brand h1{font-size:14px;margin:0}
-    .brand p{margin:0;font-size:12px;color:var(--muted)}
-    .nav{margin-top:6px;flex:1 1 auto;overflow:auto}
-    .nav button{width:100%;display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;border:0;background:transparent;color:var(--muted);cursor:pointer;font-weight:600;transition:all .18s ease;white-space:nowrap}
-    .nav button.active{background:linear-gradient(90deg,rgba(79,70,229,0.08),rgba(79,70,229,0.04));color:var(--accent);box-shadow:inset 0 1px 0 rgba(255,255,255,0.04)}
-    .nav button i{width:18px;text-align:center}
-    .panel{background:var(--settings-bg);border-radius:12px;padding:18px;box-shadow:var(--shadow);min-height:360px;position:relative;overflow:hidden;transition:transform .28s cubic-bezier(.2,.9,.2,1),box-shadow .2s}
-    .panel:hover{transform:translateY(-3px)}
-    .panel h2{margin:0 0 6px 0;font-family:'Space Grotesk',sans-serif}
-    .panel p{margin:0 0 14px 0;color:var(--muted)}
-    .closeEscFixed{position:fixed;right:14px;top:14px;width:52px;height:52px;border-radius:999px;display:flex;align-items:center;justify-content:center;gap:8px;background:var(--btn-grad);cursor:pointer;border:1px solid rgba(15,23,42,0.06);font-weight:700;z-index:9999;transition:transform .14s ease,box-shadow .14s ease,background .14s ease}
-    .closeEscFixed:hover{transform:translateY(-3px) scale(1.02);box-shadow:0 12px 30px rgba(2,6,23,0.12)}
-    .closeEscFixed i{font-size:15px;color:var(--btn-color)}
-    .closeEscFixed small{display:block;font-size:10px;color:var(--muted);margin-top:2px}
-    .layout-inner{display:flex;gap:16px}
-    .left-col{width:320px}
-    .theme-btn{padding:10px 14px;border-radius:10px;border:0;background:var(--btn-grad);color:var(--btn-color);font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 8px 20px rgba(16,24,40,0.06);transition:transform .12s ease,box-shadow .12s ease,opacity .12s ease}
-    .theme-btn:hover{transform:translateY(-2px)}
-    .theme-btn.active{box-shadow:0 12px 36px rgba(16,24,40,0.12);outline:3px solid rgba(79,70,229,0.06)}
-    .btn{padding:10px 14px;border-radius:10px;border:0;background:var(--btn-grad);color:var(--btn-color);font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 8px 20px rgba(16,24,40,0.06);transition:transform .12s ease,box-shadow .12s ease,opacity .12s ease}
-    .btn:hover{transform:translateY(-3px);box-shadow:0 14px 36px rgba(16,24,40,0.12)}
-    .btn.ghost{background:transparent;border:1px solid rgba(15,23,42,0.06);color:var(--text);box-shadow:none}
-    [data-theme="dark"] .btn.ghost{border:1px solid rgba(255,255,255,0.04);color:var(--text)}
-    .card{background:linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.75));padding:12px;border-radius:10px;box-shadow:0 6px 18px rgba(15,23,42,0.06)}
-    [data-theme="dark"] .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));}
-    .bg-select{margin-top:10px}
-    .bg-preview{height:120px;border-radius:10px;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;transition:all .18s ease;border:5px solid var(--panel-gray)}
-    .bg-preview .label{position:absolute;left:10px;top:8px;background:rgba(0,0,0,0.12);padding:6px 10px;border-radius:8px;font-weight:600;font-size:13px}
-    .controls{display:flex;gap:10px;align-items:center;margin-top:10px}
-    .color-dot{width:42px;height:42px;border-radius:8px;border:4px solid #fff;box-shadow:0 8px 18px rgba(2,6,23,0.08);display:flex;align-items:center;justify-content:center;font-weight:700}
-    input[type=color]{width:42px;height:42px;border-radius:8px;border:0;padding:0;margin:0;background:transparent;cursor:pointer}
-    .field{flex:1}
-    .field input[type=text]{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(15,23,42,0.06)}
-    .thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:10px}
-    .thumb{height:70px;border-radius:8px;overflow:hidden;position:relative;cursor:pointer;border:3px solid transparent;transition:transform .14s,box-shadow .14s}
-    .thumb img{width:100%;height:100%;object-fit:cover;display:block}
-    .thumb:hover{transform:translateY(-6px);box-shadow:0 10px 30px rgba(2,6,23,0.12)}
-    .thumb.selected{border-color:var(--accent)}
-    .upload{margin-top:12px;display:flex;gap:8px;align-items:center}
-    .upload input[type=file]{display:none}
-    .upload .upload-btn{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;border:1px dashed rgba(15,23,42,0.06);background:transparent;cursor:pointer}
-    .note{font-size:13px;color:var(--muted);margin-top:12px}
-    .prefs-list{margin-top:10px;display:grid;gap:8px}
-    .pref-row{display:flex;align-items:center;justify-content:space-between;padding:8px;border-radius:10px;background:var(--card-contrast-bg);border:1px solid rgba(15,23,42,0.04)}
-    .pref-row small{color:var(--muted)}
-    .content-area{padding:8px 0}
-    .panel-section{display:none}
-    .panel-section.active{display:block;animation:fadeIn .18s ease both}
-    #logoutBtn {position: absolute; border-radius: 30px; margin-top: -35px; margin-left: 700px; white-space: nowrap; border: none; cursor: pointer; background-color: red; height: 30px; width: 100px; color: white; gap: 6px; display: flex; justify-content: center; align-items: center;}
-    #logoutBtn:hover { background-color: fa-solid fa-right-from-bracket; }
-    .clickable-card{cursor:pointer;transition:transform .12s ease,box-shadow .12s ease,border-color .12s ease;border:1px solid transparent;padding:10px}
-    .clickable-card:hover{transform:translateY(-6px);box-shadow:0 18px 40px rgba(16,24,40,0.12);border:1px solid var(--hover-border)}
-    .server-row{display:flex;align-items:center;justify-content:space-between;padding:12px;border-radius:10px;background:var(--card-contrast-bg);border:1px solid rgba(15,23,42,0.04);height:64px}
-    .server-row .left {display:flex;align-items:center;gap:12px}
-    .server-row .iconWrap{width:44px;height:44px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.06)}
-    [data-theme="dark"] .server-row .iconWrap{background:rgba(255,255,255,0.02)}
-    .server-row .name{font-weight:700}
-    .server-row .actions {display:flex;gap:8px;align-items:center}
-    .servers-header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
-    .create-inline{display:flex;gap:8px;align-items:center}
-    .create-inline input{padding:8px;border-radius:8px;border:1px solid rgba(15,23,42,0.06)}
-    .modal-overlay{position:fixed;inset:0;background:rgba(2,6,23,0.6);display:none;align-items:center;justify-content:center;z-index:10000}
-    .modal-overlay.show{display:flex}
-    .modal{width:440px;background:var(--modal-bg);border-radius:12px;padding:16px;box-shadow:0 20px 60px rgba(2,6,23,0.4);transform:translateY(12px);opacity:0;transition:all .22s ease;color:var(--text)}
-    .modal.show{transform:none;opacity:1}
-    .modal h3{margin:0 0 6px 0}
-    .modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
-    .account-row{display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:10px;background:var(--card-contrast-bg);border:1px solid rgba(15,23,42,0.04)}
-    .account-left{display:flex;align-items:center;gap:12px}
-    .account-email{font-weight:700}
-    .access-pill{padding:6px 8px;border-radius:8px;background:rgba(0,0,0,0.04);font-size:13px}
-    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-    @media (max-width:760px){
-      .app{grid-template-columns:1fr;padding:12px}
-      .sidebar{position:relative;height:auto;margin-bottom:12px;max-height:none;overflow:visible}
-      .layout-inner{flex-direction:column}
-      .left-col{width:100%}
-      .thumbs{grid-template-columns:repeat(2,1fr)}
-      .bg-preview{height:100px}
-      .closeEscFixed{right:12px;top:12px;width:48px;height:48px}
-    }
-    @media (max-width:420px){
-      .thumbs{grid-template-columns:repeat(2,1fr)}
-      .brand .logo{width:36px;height:36px;font-size:16px}
-    }
-  </style>
 </head>
 <body>
   <div id="themeOverlay" class="theme-overlay" aria-hidden="true"></div>
@@ -187,7 +34,6 @@
         <button data-panel="account"><i class="fa-solid fa-user"></i> Account</button>
         <button data-panel="security"><i class="fa-solid fa-shield-halved"></i> Security</button>
         <button data-panel="integrations"><i class="fa-solid fa-file-import"></i> Integrations</button>
-        <!-- Servers category -->
         <button data-panel="servers"><i class="fa-solid fa-server"></i> Servers</button>
       </nav>
 
@@ -351,16 +197,13 @@
                     <strong>NOTE:</strong> Other settings are changed via the <code>initialize.sh</code> script in the <code>adpanel</code> folder.
                   </div>
 
-                  <!-- NEW: Accounts subsection -->
                   <div id="accountsSection" style="margin-top:12px;">
                     <div style="font-weight:700;margin-bottom:8px">Accounts</div>
                     <div style="color:var(--muted);margin-bottom:8px">List of accounts from <code>user-access.json</code> (admins are excluded).</div>
                     <div id="accountsList" style="display:grid;gap:8px">
-                      <!-- filled dynamically -->
                     </div>
                     <div style="margin-top:8px;color:var(--muted);font-size:13px">Click the server icon next to a user to open the popup and manage access for that account.</div>
                   </div>
-                  <!-- /NEW -->
 
                 </div>
               </div>
@@ -387,7 +230,6 @@
                 <div style="color:var(--muted);margin-top:8px">Connect external services</div>
               </div>
 
-              <!-- Servers panel (unchanged) -->
               <div id="servers" class="panel-section">
                 <div class="servers-header">
                   <div>
@@ -402,12 +244,10 @@
                 </div>
 
                 <div id="serversList" style="margin-top:12px;display:grid;gap:8px">
-                  <!-- populated dynamically -->
                 </div>
 
                 <div class="note">Creating a server folder only creates an empty directory — upload or configure bot files afterwards. Use the trash icon to permanently remove a folder.</div>
               </div>
-              <!-- /Servers -->
 
             </div>
           </div>
@@ -417,7 +257,6 @@
     </main>
   </div>
 
-  <!-- Shared modal for managing a single account's access -->
   <div id="accountModalOverlay" class="modal-overlay" aria-hidden="true">
     <div class="modal" id="accountModal">
       <h3 id="accountModalTitle">Manage access</h3>
@@ -465,19 +304,16 @@
     const modalCancel = document.getElementById('modalCancel');
     const modalSave = document.getElementById('modalSave');
 
-    // Accounts modal elements
     const accountModalOverlay = document.getElementById('accountModalOverlay');
     const accountModal = document.getElementById('accountModal');
     const accountModalTitle = document.getElementById('accountModalTitle');
     const accountModalBody = document.getElementById('accountModalBody');
     const accountModalClose = document.getElementById('accountModalClose');
 
-    // Servers elements
     const serversListEl = document.getElementById('serversList');
     const createServerBtn = document.getElementById('createServerBtn');
     const createServerNameInput = document.getElementById('createServerName');
 
-    // Accounts list element
     const accountsListEl = document.getElementById('accountsList');
 
     function applyTheme(theme, animate = true){
@@ -505,7 +341,6 @@
         loadServers();
       }
       if(panel === 'account') {
-        // If account panel becomes active, also load accounts list
         loadAccounts();
       }
     });
@@ -725,9 +560,6 @@
       }
     });
 
-    // -------------------------
-    // Servers: list, create & delete (integrated into Settings)
-    // -------------------------
     async function loadServers(){
       serversListEl.innerHTML = `<div style="padding:12px;color:var(--muted)">Loading…</div>`;
       try {
@@ -829,9 +661,6 @@
       }
     });
 
-    // -------------------------
-    // Accounts: load, render, manage access
-    // -------------------------
     async function loadAccounts(){
       accountsListEl.innerHTML = `<div style="padding:12px;color:var(--muted)">Loading accounts…</div>`;
       try {
@@ -874,11 +703,9 @@
         `;
         accountsListEl.appendChild(div);
       });
-      // store the latest bots list for modal usage
       accountsListEl._bots = bots || [];
     }
 
-    // handle manage access click (delegate)
     accountsListEl.addEventListener('click', (e)=>{
       const btn = e.target.closest('.manage-access');
       if(!btn) return;
@@ -895,7 +722,6 @@
       accountModal.classList.add('show');
 
       try {
-        // fetch current accounts + bots (fresh)
         const res = await fetch('/api/settings/accounts');
         if(!res.ok) {
           const err = await res.json().catch(()=>({error:'failed'}));
@@ -909,7 +735,6 @@
         const rec = accounts.find(a => String(a.email).toLowerCase() === String(email).toLowerCase());
         const userServers = rec ? (Array.isArray(rec.servers) ? rec.servers : []) : [];
 
-        // Build modal body: list all bots with toggle
         if(!Array.isArray(bots) || bots.length === 0){
           accountModalBody.innerHTML = `<div style="padding:12px;color:var(--muted)">No server folders found.</div>`;
           return;
@@ -946,7 +771,6 @@
             actionBtn.disabled = true;
             try {
               if(hasAccess) {
-                // revoke
                 const r = await fetch(`/api/settings/accounts/${encodeURIComponent(email)}/remove`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -956,14 +780,11 @@
                   const err = await r.json().catch(()=>({ error: 'failed' }));
                   alert(err.error || 'Failed to revoke access');
                 } else {
-                  // success
                   actionBtn.textContent = 'Add';
                   hasAccess = false;
-                  // refresh modal
                   setTimeout(()=> openManageAccessModal(email), 300);
                 }
               } else {
-                // add
                 const r = await fetch(`/api/settings/accounts/${encodeURIComponent(email)}/add`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
@@ -1013,27 +834,22 @@
     });
 
 document.addEventListener('DOMContentLoaded', () => {
-  // configurare
-  const WAIT_INTERVAL = 100; // ms între încercări
-  const WAIT_TIMEOUT = 3000; // ms timeout total (3s)
+  const WAIT_INTERVAL = 100;
+  const WAIT_TIMEOUT = 3000;
   const sidebarSelector = '#sidebarNav';
 
-  // mapări opționale: dacă eşti pe /servers vrei default 'servers' etc.
   const pathnameDefaults = [
     { match: /^\/servers(?:\/|$)/i, panel: 'servers' },
-    { match: /^\/settings(?:\/|$)/i, panel: 'preferences' } // opțional default pe settings
+    { match: /^\/settings(?:\/|$)/i, panel: 'preferences' }
   ];
 
   function getRequestedPanel() {
-    // 1) query param `panel`
     const params = new URLSearchParams(location.search);
     const p = params.get('panel');
     if (p) return p;
 
-    // 2) hash fallback (#servers)
     if (location.hash && location.hash.length > 1) return location.hash.slice(1);
 
-    // 3) deducem după pathname (dacă există o regulă)
     const path = location.pathname || '/';
     for (const r of pathnameDefaults) {
       if (r.match.test(path)) return r.panel;
@@ -1044,15 +860,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function tryOpenPanel(panel) {
     if (!panel) return false;
-    // găsim butonul din sidebar
     const btn = document.querySelector(`${sidebarSelector} button[data-panel="${panel}"]`);
     if (btn) {
-      // simulăm click în siguranță
       try {
         btn.focus?.();
         btn.click();
       } catch (e) {
-        // fallback: dispatch event
         const ev = new MouseEvent('click', { bubbles: true, cancelable: true, view: window });
         btn.dispatchEvent(ev);
       }
@@ -1070,16 +883,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const start = Date.now();
-    // dacă sidebar există deja, încercăm imediat
     if (document.querySelector(sidebarSelector)) {
       if (tryOpenPanel(panel)) {
-        // opțional: curățăm query string ca să nu rămână
-        // history.replaceState(null, '', location.pathname + location.hash);
         return;
       }
     }
 
-    // altfel așteptăm până apare (pentru pagini care inserează dinamic elementele)
     while (Date.now() - start < WAIT_TIMEOUT) {
       const side = document.querySelector(sidebarSelector);
       if (side) {
@@ -1092,10 +901,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     console.warn(`[openPanel] failed to open panel "${panel}" — button not found after ${WAIT_TIMEOUT}ms`);
-    // fallback vizibil: dacă nu găsim buton, putem selecta panoul direct (dacă elementul țint există)
     const directPanelEl = document.getElementById(panel);
     if (directPanelEl) {
-      // ascundem celelalte și afișăm direct
       document.querySelectorAll('.panel-section').forEach(s => s.classList.remove('active'));
       directPanelEl.classList.add('active');
       console.log(`[openPanel] opened panel by id: ${panel}`);
@@ -1104,7 +911,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // rulează
   waitForSidebarAndOpen();
 });
   </script>

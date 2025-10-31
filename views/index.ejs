@@ -66,7 +66,6 @@
       </div>
     </header>
 
-    <!-- spacer to preserve layout when header is fixed -->
     <div id="topbar-spacer" aria-hidden="true"></div>
 
     <main class="dashboard" id="mainContent">
@@ -211,7 +210,7 @@
       window.addEventListener('DOMContentLoaded', () => {
         const splash = document.getElementById('splash-screen');
         if (!localStorage.getItem('seenSplash')) {
-          const displayTime = 3500;
+          const displayTime = 5000;
           setTimeout(() => {
             splash.classList.add('hidden');
             setTimeout(() => splash.remove(), 600);
@@ -261,29 +260,21 @@
         searchInput.addEventListener('input', updateBotVisibility);
         updateBotVisibility();
 
-        // --- TOP BAR fixed spacer and improved scroll animations ---
         const topBar = document.getElementById('topBar');
         const spacer = document.getElementById('topbar-spacer');
 
-        // get the fully expanded natural height of the topBar
         function measureExpandedHeight() {
-          // temporarily ensure compact class is removed so we measure expanded height
           const hadCompact = topBar.classList.contains('top-bar--compact');
           topBar.classList.remove('top-bar--compact');
 
-          // force layout and measure
           const height = Math.ceil(topBar.getBoundingClientRect().height);
-
-          // restore compact state if needed
           if (hadCompact) topBar.classList.add('top-bar--compact');
           return height;
         }
 
-        // set spacer to the expanded (max) topBar height so layout never collapses when topBar shrinks
         let expandedHeight = measureExpandedHeight();
         spacer.style.height = expandedHeight + 'px';
 
-        // update expandedHeight on resize (debounced with requestAnimationFrame)
         let resizeRAF = null;
         window.addEventListener('resize', () => {
           if (resizeRAF) cancelAnimationFrame(resizeRAF);
@@ -293,14 +284,12 @@
           });
         });
 
-        // ResizeObserver to keep spacer accurate if content inside topBar changes
         const ro = new ResizeObserver(() => {
           expandedHeight = measureExpandedHeight();
           spacer.style.height = expandedHeight + 'px';
         });
         ro.observe(topBar);
 
-        // scroll behaviour: compact on small scroll, hide on scroll down, show on scroll up
         let lastScrollY = window.scrollY || 0;
         let ticking = false;
         let pinnedTimeout = null;
@@ -309,14 +298,12 @@
           const currentY = window.scrollY || 0;
           const delta = currentY - lastScrollY;
 
-          // compact threshold (only visual compacting)
           if (currentY > 36) {
             topBar.classList.add('top-bar--compact');
           } else {
             topBar.classList.remove('top-bar--compact');
           }
 
-          // if near top, always fully visible
           if (currentY <= 24) {
             topBar.classList.remove('top-bar--hidden');
             topBar.classList.remove('top-bar--pinned');
@@ -325,18 +312,15 @@
             return;
           }
 
-          // hide on scroll down (significant), show on scroll up
           if (Math.abs(delta) > 4) {
             if (delta > 0 && currentY > 120) {
               // scrolling down
               topBar.classList.add('top-bar--hidden');
               topBar.classList.remove('top-bar--pinned');
             } else if (delta < 0) {
-              // scrolling up
               topBar.classList.remove('top-bar--hidden');
               topBar.classList.add('top-bar--pinned');
 
-              // clear previous timeout and schedule remove pinned class so it doesn't stay forever
               if (pinnedTimeout) clearTimeout(pinnedTimeout);
               pinnedTimeout = setTimeout(() => {
                 topBar.classList.remove('top-bar--pinned');
@@ -355,7 +339,6 @@
           }
         }, { passive: true });
 
-        // ensure topBar is visible on initial load if page not at top
         if ((window.scrollY || 0) > 36) {
           topBar.classList.add('top-bar--compact');
         } else {
@@ -363,17 +346,14 @@
         }
         topBar.classList.remove('top-bar--hidden');
 
-        // --- logout + cookie deletion (improved to try root & domain) ---
         function deleteAllClientCookies() {
           const cookies = document.cookie ? document.cookie.split('; ') : [];
           for (const cookie of cookies) {
             const eqPos = cookie.indexOf('=');
             const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
-            // try clearing common paths and host domain
             document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
             document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${location.hostname}`;
             const domainParts = location.hostname.split('.');
-            // try parent domains
             for (let i = 0; i < domainParts.length - 1; i++) {
               const dom = '.' + domainParts.slice(i).join('.');
               document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${dom}`;
@@ -397,7 +377,7 @@
         }
       });
 
-  const serverStartTime = <%= serverStartTime %>; // primit de la server
+  const serverStartTime = <%= serverStartTime %>;
   const uptimeDisplay = document.getElementById('uptimeDisplay');
 
   function formatTime(ms) {

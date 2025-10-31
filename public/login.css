@@ -299,7 +299,7 @@ svg {
 }
 
 #menuBtn, #menuBtn span {
-  all: unset; /* resetează tot ce vine din alte CSS-uri */
+  all: unset;
 }
 
 #menuBtn {

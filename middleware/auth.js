@@ -17,17 +17,15 @@ function saveUsers() {
 }
 
 function authMiddleware(req, res, next) {
-  if (req.path.startsWith("/register")) return next(); // permit register
+  if (req.path.startsWith("/register")) return next();
 
   const sessionUser = req.session?.user;
   if (!sessionUser) {
-    // no session, redirect to login
     return res.redirect("/login");
   }
 
   const user = users[sessionUser];
   if (!user) {
-    // user not found, clear session and redirect to login
     req.session.destroy(() => {});
     return res.redirect("/login");
   }

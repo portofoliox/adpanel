@@ -7,10 +7,10 @@ const router = express.Router();
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "tempUploads"); // folder temporar
+    cb(null, "tempUploads");
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + "-" + file.originalname); // nume unic temporar
+    cb(null, Date.now() + "-" + file.originalname);
   },
 });
 
@@ -21,23 +21,18 @@ router.post("/upload", upload.single("file"), (req, res) => {
   if (!file) return res.status(400).send("No file uploaded");
 
   if (!file.originalname.endsWith(".zip")) {
-    // Dacă nu e ZIP, poți refuza upload-ul sau salva simplu
     return res.status(400).send("Only ZIP files are allowed");
   }
 
-  // Extrage numele fără extensie
   const folderName = path.basename(file.originalname, ".zip");
   const uploadPath = path.join(__dirname, "..", "bots", folderName);
 
   try {
-    // Crează folderul
     fs.mkdirSync(uploadPath, { recursive: true });
 
-    // Dezarhivează acolo
     const zip = new AdmZip(file.path);
     zip.extractAllTo(uploadPath, true);
 
-    // Șterge arhiva temporară
     fs.unlinkSync(file.path);
 
     res.send(`ZIP uploaded and extracted to bots/${folderName}`);
@@ -47,7 +42,6 @@ router.post("/upload", upload.single("file"), (req, res) => {
   }
 });
 
-// ✅ Nou: creare fișier sau folder
 router.post("/create", express.json(), (req, res) => {
   const { bot, type, name, path: subPath } = req.body;
 

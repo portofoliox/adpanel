@@ -1,20 +1,10 @@
 #!/usr/bin/env bash
 # rate-limiting.sh
-# Usage: chmod +x rate-limiting.sh && ./rate-limiting.sh
-#
-# Menu:
-# 1) Start rate limiting
-# 2) Stop rate limiting (set rate_limiting=false if true)
-# 3) Set custom limit & window (window is in seconds)
-# 4) Exit
-#
-# The script will create security.json with defaults if it does not exist.
 
 FILE="security.json"
 DEFAULT_LIMIT=10
 DEFAULT_WINDOW=60
 
-# helper: read numeric value from JSON (no jq required)
 json_read_number() {
   local key="$1"
   if [ -f "$FILE" ]; then
@@ -28,7 +18,6 @@ json_read_number() {
   fi
 }
 
-# helper: read boolean value of rate_limiting (true/false/absent)
 json_read_rate_flag() {
   if [ -f "$FILE" ]; then
     if grep -Pq '"rate_limiting"\s*:\s*true' "$FILE" 2>/dev/null; then
@@ -43,7 +32,6 @@ json_read_rate_flag() {
   fi
 }
 
-# ensure file exists with defaults (if missing)
 if [ ! -f "$FILE" ]; then
   cat > "$FILE" <<EOF
 {
@@ -55,7 +43,6 @@ EOF
   echo "Created default $FILE"
 fi
 
-# helper: ensure JSON minimally valid after edits
 ensure_json_minimal() {
   if [ ! -f "$FILE" ]; then
     echo "{}" > "$FILE"
@@ -65,15 +52,12 @@ ensure_json_minimal() {
     echo "{}" > "$FILE"
     return
   fi
-  # if file has no quoted keys, normalize to {}
   if ! grep -q '"[A-Za-z0-9_:-]\+"' "$FILE"; then
     echo "{}" > "$FILE"
   fi
 }
 
-# helper: remove keys using Python (preferred), jq, or perl fallback
 remove_keys_from_json() {
-  # remove rate_limiting, limit, window_seconds
   if command -v python3 >/dev/null 2>&1; then
     python3 - <<PY
 import json,sys
@@ -109,7 +93,6 @@ PY
     jq 'del(.rate_limiting, .limit, .window_seconds)' "$FILE" > "$tmp" && mv "$tmp" "$FILE"
     return $?
   else
-    # Perl fallback: careful removals of the three keys and fix commas
     tmp=$(mktemp)
     perl -0777 -pe '
       s/,\s*"rate_limiting"\s*:\s*(?:true|false)\s*//s;
@@ -165,7 +148,6 @@ EOF
     2)
       echo ""
       if [ -f "$FILE" ]; then
-        # schimbă doar rate_limiting=true în false
         if grep -q '"rate_limiting"\s*:\s*true' "$FILE"; then
           sed -i.bak -E 's/("rate_limiting"\s*:\s*)true/\1false/' "$FILE"
           echo "Rate limiting DISABLED in $FILE."

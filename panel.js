@@ -1,4 +1,3 @@
-// panel.js (complete) - with user-access auto-sync on startup
 const express = require("express");
 const path = require("path");
 const fs = require("fs");
@@ -8,10 +7,10 @@ const { spawn } = require("child_process");
 const session = require("express-session");
 let bcrypt;
 try {
-    bcrypt = require('bcrypt'); // încearcă varianta nativă
+    bcrypt = require('bcrypt');
 } catch (e) {
     console.log('Detected termux environment... Installing BcryptJS');
-    bcrypt = require('bcryptjs'); // fallback
+    bcrypt = require('bcryptjs');
 }
 
 let speakeasy;
@@ -46,7 +45,6 @@ const nodeVersions = ["14", "16", "18", "20"];
 const USERS_FILE = path.join(__dirname, "user.json");
 let userCount = 0;
 
-/* -------------------- Ensure user-access.json exists (non-destructive) -------------------- */
 try {
   if (!fs.existsSync(USER_ACCESS_FILE)) {
     const defaultAccess = [];
@@ -57,10 +55,8 @@ try {
   console.warn("[user-access] Could not create default file:", e && e.message);
 }
 
-/* -------------------- Rate limiter (security.json) -------------------- */
 const SECURITY_FILE = path.join(__dirname, "security.json");
 
-// Default security config
 let security = {
   rate_limiting: false,
   limit: 5,
@@ -150,8 +146,6 @@ setInterval(() => {
   }
 }, 30_000);
 
-/* -------------------- helpers: users.json (array) -------------------- */
-
 function loadUsers() {
   try {
     if (!fs.existsSync(USERS_FILE)) return [];
@@ -193,8 +187,6 @@ function updateUser(updatedUser) {
   }
   return saveUsers(users);
 }
-
-/* -------------------- helpers: user-access.json -------------------- */
 
 function loadUserAccess() {
   try {
@@ -273,22 +265,15 @@ function userHasAccessToServer(email, botName) {
   return access.includes(botName);
 }
 
-/* -------------------- Sync user.json -> user-access.json on startup -------------------- */
-
-/**
- * Reads all emails from user.json and ensures each email exists in user-access.json.
- * If an email missing, adds { email, servers: [] }.
- * Does not modify existing records or servers arrays.
- */
 function syncUserAccessWithUsers() {
   try {
-    const users = loadUsers(); // array of user objects with .email
+    const users = loadUsers();
     if (!Array.isArray(users) || users.length === 0) {
       console.log("[user-access] No users found in user.json to sync.");
       return;
     }
 
-    const access = loadUserAccess(); // existing records
+    const access = loadUserAccess();
     const lowerSet = new Set(access.map(r => String(r.email).toLowerCase()));
 
     let added = 0;
@@ -297,7 +282,6 @@ function syncUserAccessWithUsers() {
       if (!email) return;
       const lower = email.toLowerCase();
       if (!lowerSet.has(lower)) {
-        // add a new entry with empty servers array
         access.push({ email, servers: [] });
         lowerSet.add(lower);
         added++;
@@ -319,10 +303,7 @@ function syncUserAccessWithUsers() {
   }
 }
 
-// perform initial sync at startup (after ensuring file exists)
 syncUserAccessWithUsers();
-
-/* -------------------- express / view setup -------------------- */
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
@@ -345,8 +326,6 @@ function isAdmin(req) {
   const u = req.session && req.session.user ? findUserByEmail(req.session.user) : null;
   return !!(u && u.admin);
 }
-
-/* -------------------- Auth routes -------------------- */
 
 app.get("/login", (req, res) => {
   res.render("login", { error: null });
@@ -371,12 +350,10 @@ function loadUserCount() {
 }
 USER_COUNT_CACHE = loadUserCount();
 
-// watch for changes to user.json and update cache (debounced)
 try {
   let lastSeen = Date.now();
   fs.watchFile(USERS_FILE, { interval: 1000 }, (curr, prev) => {
     const now = Date.now();
-    // avoid noisy double-calls
     if (now - lastSeen < 800) return;
     lastSeen = now;
     const newCount = loadUserCount();
@@ -389,7 +366,6 @@ try {
   console.warn("[user-count] fs.watchFile failed:", e && e.message);
 }
 
-// API mic pentru user count
 app.get("/api/usercount", (req, res) => {
   return res.json({ userCount: USER_COUNT_CACHE });
 });
@@ -482,7 +458,6 @@ app.post('/logout', (req, res) => {
   }
 });
 
-/* allow unauthenticated access to login/register/forgot-password */
 app.use((req, res, next) => {
   if (
     req.path.startsWith("/login") ||
@@ -493,7 +468,6 @@ app.use((req, res, next) => {
   next();
 });
 
-/* -------------------- Index and Settings -------------------- */
 
 app.get("/", (req, res) => {
   const allBots = fs.existsSync(BOTS_DIR) ? fs.readdirSync(BOTS_DIR) : [];
@@ -545,8 +519,6 @@ app.get("/settings/servers", (req, res) => {
   if (!isAdmin(req)) return res.redirect("/");
   res.render("server", { user: findUserByEmail(req.session.user) });
 });
-
-/* -------------------- Background CSS updater -------------------- */
 
 function makeCssBackground(value, type) {
   if (!value) return null;
@@ -613,8 +585,6 @@ app.post("/api/settings/background", (req, res) => {
   }
 });
 
-/* -------------------- Change password (multi-user) -------------------- */
-
 app.post("/api/settings/change-password", (req, res) => {
   if (!isAuthenticated(req)) return res.status(401).json({ error: "not authenticated" });
 
@@ -661,8 +631,6 @@ app.post("/api/settings/change-password", (req, res) => {
   }
 });
 
-/* -------------------- Servers API (for settings UI) -------------------- */
-
 app.get("/api/settings/servers", (req, res) => {
   if (!isAdmin(req)) return res.status(403).json({ error: "not authorized" });
   try {
@@ -676,7 +644,6 @@ app.get("/api/settings/servers", (req, res) => {
   }
 });
 
-// Admin: create server (POST) and delete server (DELETE)
 app.post("/api/settings/servers", (req, res) => {
   if (!isAdmin(req)) return res.status(403).json({ error: "not authorized" });
 
@@ -684,7 +651,6 @@ app.post("/api/settings/servers", (req, res) => {
   const name = nameRaw.trim();
   if (!name) return res.status(400).json({ error: "missing name" });
 
-  // basic validation: no traversal, no slashes/backslashes, reasonable length
   if (name.includes("..") || /[\/\\]/.test(name) || name.length > 120) {
     return res.status(400).json({ error: "invalid name" });
   }
@@ -728,13 +694,11 @@ app.delete("/api/settings/servers/:name", (req, res) => {
     const st = fs.statSync(target);
     if (!st.isDirectory()) return res.status(400).json({ error: "not a directory" });
 
-    // Remove directory recursively
     fs.rmSync(target, { recursive: true, force: true });
     console.log("[/api/settings/servers] Deleted server folder:", target);
 
-    // CLEANUP: remove references from user-access.json if present (non-destructive)
     try {
-      const access = loadUserAccess(); // uses helper already in panel.js
+      const access = loadUserAccess();
       let changed = false;
       const normalized = String(name);
       const newAccess = (access || []).map(rec => {
@@ -762,10 +726,6 @@ app.delete("/api/settings/servers/:name", (req, res) => {
   }
 });
 
-/**
- * GET /api/my-servers
- * Returns JSON { names: [<folder names>] } for the current user (non-admin users)
- */
 app.get("/api/my-servers", (req, res) => {
   if (!isAuthenticated(req)) return res.status(401).json({ error: "not authenticated" });
   try {
@@ -792,17 +752,11 @@ app.get("/api/my-servers", (req, res) => {
   }
 });
 
-/* -------------------- Accounts API (admin-only) -------------------- */
-/**
- * GET /api/settings/accounts
- * Returns { accounts: [ { email, servers } ], bots: [<all bot folders>] }
- * Admin-only. Admin users (those with admin:true in user.json) are excluded from the returned accounts list.
- */
 app.get("/api/settings/accounts", (req, res) => {
   if (!isAdmin(req)) return res.status(403).json({ error: "not authorized" });
   try {
-    const accountsRaw = loadUserAccess(); // array of { email, servers }
-    const users = loadUsers(); // to check admin flags
+    const accountsRaw = loadUserAccess();
+    const users = loadUsers();
     const adminEmails = users.filter(u => u && u.admin).map(u => String(u.email).toLowerCase());
 
     const accounts = Array.isArray(accountsRaw) ? accountsRaw.map(a => ({
@@ -810,10 +764,8 @@ app.get("/api/settings/accounts", (req, res) => {
       servers: Array.isArray(a.servers) ? a.servers : []
     })) : [];
 
-    // exclude admin emails from the list (as requested)
     const filtered = accounts.filter(a => !adminEmails.includes(String(a.email).toLowerCase()));
 
-    // list all bot folders
     const allBots = fs.existsSync(BOTS_DIR) ? fs.readdirSync(BOTS_DIR, { withFileTypes: true }).filter(e => e.isDirectory()).map(d => d.name) : [];
 
     return res.json({ accounts: filtered, bots: allBots });
@@ -823,11 +775,6 @@ app.get("/api/settings/accounts", (req, res) => {
   }
 });
 
-/**
- * POST /api/settings/accounts/:email/add
- * body: { server: "<serverName>" }
- * Admin-only. Adds server to user's access list (creates record if missing).
- */
 app.post("/api/settings/accounts/:email/add", (req, res) => {
   if (!isAdmin(req)) return res.status(403).json({ error: "not authorized" });
   const encoded = req.params.email || "";
@@ -836,7 +783,6 @@ app.post("/api/settings/accounts/:email/add", (req, res) => {
   const server = req.body && req.body.server ? String(req.body.server) : "";
   if (!email || !server) return res.status(400).json({ error: "missing email or server" });
 
-  // validate server exists (optional, but safer)
   const allBots = fs.existsSync(BOTS_DIR) ? fs.readdirSync(BOTS_DIR, { withFileTypes: true }).filter(e => e.isDirectory()).map(d => d.name) : [];
   if (!allBots.includes(server) && server !== "all") {
     return res.status(400).json({ error: "server not found" });
@@ -852,11 +798,6 @@ app.post("/api/settings/accounts/:email/add", (req, res) => {
   }
 });
 
-/**
- * POST /api/settings/accounts/:email/remove
- * body: { server: "<serverName>" }
- * Admin-only. Removes server from user's access list.
- */
 app.post("/api/settings/accounts/:email/remove", (req, res) => {
   if (!isAdmin(req)) return res.status(403).json({ error: "not authorized" });
   const encoded = req.params.email || "";
@@ -874,8 +815,6 @@ app.post("/api/settings/accounts/:email/remove", (req, res) => {
     return res.status(500).json({ error: "failed to remove access" });
   }
 });
-
-/* -------------------- Create / Rename / Explore ... -------------------- */
 
 app.post("/create", (req, res) => {
   const { bot, type, name, path: relPath } = req.body || {};
@@ -939,12 +878,6 @@ app.post("/rename", (req, res) => {
   }
 });
 
-/* -------------------- Extraction helpers -------------------- */
-
-/**
- * Safe join: ensures resolved path stays inside baseDest.
- * Returns resolved path or null if path would escape baseDest.
- */
 function safeJoinAndCheck(dest, entryPath) {
   const target = path.join(dest, entryPath);
   const resolved = path.resolve(target);
@@ -1046,18 +979,8 @@ async function extractWith7zOrUnrar(filePath, dest) {
   });
 }
 
-/* -------------------- NEW: Upload route (dual behavior) -------------------- */
-/**
- * POST /upload
- * - If body/form includes `bot` (and optionally `path`): the uploaded file is moved into that bot folder (keeps filename), no extraction.
- * - If `bot` is NOT provided: creates a new folder in ./bots named after the archive and extracts the archive there.
- *
- * Input: field 'file' (multipart), optional fields 'bot' and 'path'
- */
 app.post("/upload", upload.single("file"), async (req, res) => {
-  // require authentication
   if (!isAuthenticated(req)) {
-    // if classic form, redirect; if XHR, return 401
     if (req.headers && req.headers.accept && req.headers.accept.includes("text/html")) {
       return res.redirect("/login");
     }
@@ -1075,12 +998,10 @@ app.post("/upload", upload.single("file"), async (req, res) => {
   const originalName = req.file.originalname || "upload";
   const lower = originalName.toLowerCase();
 
-  // If a bot is specified -> just move the uploaded file into that bot folder (optionally into subpath)
   const bot = req.body && req.body.bot ? String(req.body.bot).trim() : "";
   const relPath = req.body && typeof req.body.path !== "undefined" ? String(req.body.path).trim() : "";
 
   if (bot) {
-    // validate bot name (no traversal)
     if (bot.includes("..") || bot.includes("/") || bot.includes("\\")) {
       try { fs.unlinkSync(uploadedPath); } catch (e) {}
       return res.status(400).json({ error: "Invalid bot name" });
@@ -1099,7 +1020,6 @@ app.post("/upload", upload.single("file"), async (req, res) => {
       const safeFilename = String(originalName).replace(/[\r\n]/g, "_");
       const destFile = path.join(resolvedTarget, safeFilename);
       fs.renameSync(uploadedPath, destFile);
-      // success
       if (req.headers && req.headers.accept && req.headers.accept.includes("text/html")) {
         return res.redirect("/");
       }
@@ -1111,8 +1031,6 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     }
   }
 
-  // If no bot specified -> treat upload as "new package": create folder named after archive and extract inside
-  // compute base name (handle .tar.gz and .tgz specially)
   let baseName;
   if (lower.endsWith(".tar.gz")) {
     baseName = originalName.slice(0, -7);
@@ -1122,11 +1040,9 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     baseName = originalName.replace(path.extname(originalName), "");
   }
 
-  // sanitize folder name
   let folderName = String(baseName).trim().replace(/\s+/g, "-").replace(/[^\w\-_.]/g, "").replace(/^-+|-+$/g, "");
   if (!folderName) folderName = "uploaded-" + Date.now();
 
-  // ensure unique folder
   let finalFolder = folderName;
   let counter = 0;
   while (fs.existsSync(path.join(BOTS_DIR, finalFolder))) {
@@ -1143,7 +1059,6 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     return res.status(500).json({ error: "Failed to create destination folder" });
   }
 
-  // extract into destDir based on extension
   let extractionError = null;
   try {
     if (lower.endsWith(".zip")) {
@@ -1160,7 +1075,6 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     extractionError = err && err.message ? err.message : String(err);
   }
 
-  // remove uploaded temp file
   try {
     if (fs.existsSync(uploadedPath)) fs.unlinkSync(uploadedPath);
   } catch (e) {
@@ -1168,7 +1082,6 @@ app.post("/upload", upload.single("file"), async (req, res) => {
   }
 
   if (extractionError) {
-    // cleanup destDir on failure
     try {
       fs.rmSync(destDir, { recursive: true, force: true });
     } catch (e) {
@@ -1180,26 +1093,18 @@ app.post("/upload", upload.single("file"), async (req, res) => {
     return res.status(400).json({ error: "Upload failed: " + extractionError });
   }
 
-  // success
   if (req.headers && req.headers.accept && req.headers.accept.includes("text/html")) {
     return res.redirect("/");
   }
   return res.json({ ok: true, folder: finalFolder, msg: "Extracted to " + finalFolder });
 });
 
-/* -------------------- NEW: Extract endpoint for UI's "Unarchive" -------------------- */
-/**
- * POST /extract
- * body: { bot: "<botName>", path: "<relative/path/to/archive>" }
- * Extracts the archive file present in BOTS_DIR/<bot>/<path> into the SAME directory where the archive is located.
- */
 app.post("/extract", async (req, res) => {
   if (!isAuthenticated(req)) return res.status(401).json({ error: "not authenticated" });
 
   const { bot, path: relPath } = req.body || {};
   if (!bot || !relPath) return res.status(400).json({ error: "missing bot or path" });
 
-  // sanitize and resolve
   if (bot.includes("..") || bot.includes("/") || bot.includes("\\")) return res.status(400).json({ error: "Invalid bot" });
 
   const base = path.resolve(BOTS_DIR);
@@ -1229,8 +1134,6 @@ app.post("/extract", async (req, res) => {
   }
 });
 
-/* -------------------- END upload/extract implementation -------------------- */
-
 app.get("/bot/:bot", (req, res) => {
   const botName = req.params.bot;
   const botDir = path.join(BOTS_DIR, botName);
@@ -1257,8 +1160,6 @@ app.get("/explore/:bot", (req, res) => {
   });
   res.json({ path: rel, entries });
 });
-
-/* -------------------- Sockets & Processes -------------------- */
 
 const LOG_BUFFER_SIZE = 500;
 const buffers = {};
